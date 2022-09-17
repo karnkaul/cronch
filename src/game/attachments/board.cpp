@@ -1,11 +1,13 @@
 #include <engine/frame.hpp>
+#include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/player.hpp>
 #include <game/layout.hpp>
+#include <game/theme.hpp>
 #include <game/world.hpp>
 #include <tardigrade/director.hpp>
 #include <tardigrade/services.hpp>
-#include <util/logger.hpp>
+#include <util/random.hpp>
 #include <algorithm>
 
 namespace cronch {
@@ -75,6 +77,12 @@ ChompType Board::try_hit() {
 
 void Board::dilate_time(float const scale, tg::Time const duration) { m_dilator.enable(scale, duration); }
 
+void Board::setup() {
+	auto const* theme = tg::locate<Theme*>();
+	m_sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->chomps.assets.sheet);
+	m_data = theme->chomps.data;
+}
+
 void Board::tick(tg::DeltaTime const dt) {
 	for (auto& vec : m_entries.array) {
 		for (auto& [sprite, chomp] : vec) {
@@ -97,7 +105,15 @@ void Board::prepare(Entry& out, Lane const lane, Chomp chomp) {
 	out.chomp = std::move(chomp);
 	out.chomp.dir = vf::nvec2{to_vec2(lane)};
 	out.sprite.transform().position = out.chomp.dir * he;
-	out.sprite.set_size({50.0f, 50.0f});
+	if (chomp.type == ChompType::eFood) {
+		auto uv_index = std::uint32_t{m_data.uvs.first};
+		if (m_data.uvs.last > m_data.uvs.first) { uv_index = util::random_range(m_data.uvs.first, m_data.uvs.last - 1); }
+		out.sprite.set_sheet(m_sheet, vf::Sprite::UvIndex{uv_index});
+		out.sprite.set_size(m_data.sizes.food);
+	} else {
+		out.sprite.set_sheet(m_sheet, vf::Sprite::UvIndex{m_data.uvs.dilator});
+		out.sprite.set_size(m_data.sizes.dilator);
+	}
 }
 
 void Board::release(std::vector<Entry>& out, Ptr<Entry> const target) {

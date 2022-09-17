@@ -6,27 +6,18 @@
 #include <game/attachments/player.hpp>
 #include <game/attachments/renderer.hpp>
 #include <game/layout.hpp>
+#include <game/theme.hpp>
 #include <game/world.hpp>
 #include <tardigrade/tardigrade.hpp>
 #include <util/logger.hpp>
+#include <util/random.hpp>
 #include <vulkify/instance/mouse.hpp>
 #include <filesystem>
-#include <random>
 
 namespace cronch {
 namespace fs = std::filesystem;
 
 namespace {
-template <typename T>
-T random_range(T const lo, T const hi) {
-	static auto eng = std::default_random_engine{std::random_device{}()};
-	if constexpr (std::integral<T>) {
-		return std::uniform_int_distribution<T>{lo, hi}(eng);
-	} else {
-		return std::uniform_real_distribution<T>{lo, hi}(eng);
-	}
-}
-
 struct Debug : tg::TickAttachment {
 	void setup() override {}
 	void tick(tg::DeltaTime) override {
@@ -36,8 +27,8 @@ struct Debug : tg::TickAttachment {
 		if (pressed(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
 		if (pressed(vf::Key::eP)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
-			auto const lane = static_cast<Lane>(random_range(0UL, std::size(lanes_v) - 1));
-			auto const tumble = vf::Degree{random_range(-180.0f, 180.0f)};
+			auto const lane = static_cast<Lane>(util::random_range(0UL, std::size(lanes_v) - 1));
+			auto const tumble = vf::Degree{util::random_range(-180.0f, 180.0f)};
 			if (held(vf::Key::eLeftControl) || held(vf::Key::eRightControl)) {
 				world->board->spawn_dilator(lane, tumble);
 			} else {
@@ -72,6 +63,17 @@ std::optional<Context> make_context(char const* arg0) {
 	ret.capo_instance = capo::Instance::make();
 	return ret;
 }
+
+Theme load_theme(Resources& out) {
+	auto ret = Theme{};
+	if (auto loaded = ret.load("theme.txt")) {
+		logger::info("[Theme] loaded [{}] entries", loaded);
+		out.load<vf::Sprite::Sheet>(ret.player.assets.sheet);
+		auto* sheet = out.load<vf::Sprite::Sheet>(ret.chomps.assets.sheet);
+		if (ret.chomps.data.uvs.last == 0) { ret.chomps.data.uvs.last = static_cast<std::uint32_t>(sheet->uv_count()); }
+	}
+	return ret;
+}
 } // namespace
 } // namespace cronch
 
@@ -84,20 +86,17 @@ int main(int, char** argv) {
 	auto services = tg::Services::Scoped{};
 	auto context = tg::ServiceProvider<Context>{std::move(*result)};
 	auto resources = tg::ServiceProvider<Resources>{context};
+	auto theme = tg::ServiceProvider<Theme>{load_theme(resources)};
+
 	tg::Services::provide(&context.vf_context);
 	tg::Services::provide(&context.vf_context.device());
 	auto io_instance = io::Instance{argv[0]};
-
-	auto* sheet = resources.load<vf::Sprite::Sheet>("textures/test_sheet.txt");
 
 	auto director = tg::Director{};
 	tg::Services::provide(&director);
 	auto& world = director.enqueue<World>();
 
 	world.spawn<Debug>();
-
-	world.player->sheet = sheet;
-	world.player->sprite->get().set_sheet(sheet);
 
 	context.vf_context.show();
 	while (!context.vf_context.closing()) {

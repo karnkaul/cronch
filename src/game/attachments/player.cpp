@@ -1,8 +1,10 @@
 #include <engine/frame.hpp>
+#include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/renderer.hpp>
+#include <game/theme.hpp>
 #include <game/world.hpp>
 
 namespace cronch {
@@ -21,14 +23,19 @@ void Player::setup() {
 	controller = entity()->attach<Controller>();
 	sprite = entity()->find_or_attach<SpriteRenderer<vf::Sprite>>();
 
+	auto const* theme = tg::locate<Theme*>();
+	sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->player.assets.sheet);
+	sprite->get().set_sheet(sheet, vf::Sprite::UvIndex{theme->player.data.uvs.idle});
+	m_data = theme->player.data;
+
 	sprite->get().draw_invalid = true;
-	prop->bounds = {100.0f, 100.0f};
+	prop->bounds = {m_data.size};
 }
 
 void Player::tick(tg::DeltaTime) {
 	if (sheet) {
-		auto const uv = controller->state() == Controller::State::eAttack ? vf::Sprite::UvIndex{1} : vf::Sprite::UvIndex{0};
-		if (m_uv.changed(uv)) { sprite->get().set_sheet(sheet, uv); }
+		auto const uv = controller->state() == Controller::State::eAttack ? m_data.uvs.attack : m_data.uvs.idle;
+		if (m_uv.changed(uv)) { sprite->get().set_sheet(sheet, vf::Sprite::UvIndex{uv}); }
 	}
 	prop->transform.orientation = vf::nvec2{controller->dir()};
 }

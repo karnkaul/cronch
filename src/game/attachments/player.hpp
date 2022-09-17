@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/animated_sprite.hpp>
 #include <game/attachments/shared_prop.hpp>
+#include <game/theme.hpp>
 #include <util/cache.hpp>
 
 namespace cronch {
@@ -30,7 +31,8 @@ class Player : public SharedProp {
 	void setup() override;
 	void tick(tg::DeltaTime dt) override;
 
-	Cache<vf::Sprite::UvIndex> m_uv{};
+	Cache<std::uint32_t> m_uv{};
+	Theme::Player::Data m_data{};
 	int m_dilates{};
 };
 } // namespace cronch
