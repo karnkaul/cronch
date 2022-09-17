@@ -125,6 +125,36 @@ struct ThemeParser {
 		error();
 	}
 
+	void hud_assets() {
+		if (terminal("font")) {
+			out.hud.assets.font = std::move(value);
+			return;
+		}
+		error();
+	}
+
+	void hud() {
+		if (match("assets.")) { return hud_assets(); }
+		error();
+	}
+
+	void vfx_poof() {
+		if (terminal("sheet")) {
+			out.vfx.poof.sheet = std::move(value);
+			return;
+		}
+		if (terminal("duration")) {
+			out.vfx.poof.duration = static_cast<float>(std::atof(value.c_str()));
+			return;
+		}
+		error();
+	}
+
+	void vfx() {
+		if (match("poof.")) { return vfx_poof(); }
+		error();
+	}
+
 	std::size_t operator()(std::istream& in) {
 		auto parser = util::Property::Parser{in};
 		parser.parse_all([this](util::Property p) {
@@ -132,6 +162,8 @@ struct ThemeParser {
 			value = std::move(p.value);
 			if (match("player.")) { return player(); }
 			if (match("chomp.")) { return chomp(); }
+			if (match("hud.")) { return hud(); }
+			if (match("vfx.")) { return vfx(); }
 			error();
 		});
 		return parsed;

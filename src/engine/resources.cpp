@@ -109,6 +109,7 @@ Resources::Resources(Context const& context) : m_context(&context) {}
 
 template <>
 Ptr<vf::Texture> Resources::do_load<vf::Texture>(Uri uri) {
+	if (uri.empty()) { return {}; }
 	auto sw = Stopwatch{};
 	auto image = vf::Image{};
 	auto buffer = ktl::byte_array{};
@@ -132,6 +133,7 @@ Ptr<vf::Texture> Resources::do_load<vf::Texture>(Uri uri) {
 
 template <>
 Ptr<vf::Ttf> Resources::do_load<vf::Ttf>(Uri uri) {
+	if (uri.empty()) { return {}; }
 	auto sw = Stopwatch{};
 	auto buffer = ktl::byte_array{};
 	if (!io::load(buffer, uri.data())) {
@@ -150,6 +152,7 @@ Ptr<vf::Ttf> Resources::do_load<vf::Ttf>(Uri uri) {
 
 template <>
 Ptr<capo::Sound> Resources::do_load<capo::Sound>(Uri uri) {
+	if (uri.empty()) { return {}; }
 	auto sw = Stopwatch{};
 	auto buffer = ktl::byte_array{};
 	if (!io::load(buffer, uri.data())) {
@@ -169,6 +172,7 @@ Ptr<capo::Sound> Resources::do_load<capo::Sound>(Uri uri) {
 
 template <>
 Ptr<vf::Sprite::Sheet> Resources::do_load<vf::Sprite::Sheet>(Uri uri) {
+	if (uri.empty()) { return {}; }
 	auto sw = Stopwatch{};
 	auto buffer = ktl::byte_array{};
 	if (!io::load(buffer, uri.data())) {

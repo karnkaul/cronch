@@ -42,8 +42,27 @@ struct Theme {
 		Data data{};
 	};
 
+	struct Hud {
+		struct Assets {
+			std::string font{};
+		};
+
+		Assets assets{};
+	};
+
+	struct Vfx {
+		struct Poof {
+			std::string sheet{};
+			float duration{0.25f};
+		};
+
+		Poof poof{};
+	};
+
 	Chomps chomps{};
 	Player player{};
+	Hud hud{};
+	Vfx vfx{};
 
 	std::size_t load(char const* uri);
 };

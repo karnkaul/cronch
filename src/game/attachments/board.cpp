@@ -2,6 +2,7 @@
 #include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/player.hpp>
+#include <game/attachments/vfx.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
@@ -54,6 +55,7 @@ ChompType Board::try_score(Lane const lane) {
 	auto* world = static_cast<World*>(scene());
 	if (closest.entry && world->player->prop->rect().intersects(closest.entry->sprite.bounds())) {
 		auto const ret = closest.entry->chomp.type;
+		world->poof->spawn(closest.entry->sprite.transform().position);
 		release(vec, closest.entry);
 		return ret;
 	}
