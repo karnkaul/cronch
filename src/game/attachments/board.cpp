@@ -2,7 +2,6 @@
 #include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/player.hpp>
-#include <game/attachments/vfx.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
@@ -42,7 +41,7 @@ void Board::spawn_dilator(Lane const lane, vf::Radian const tumble, float const 
 	prepare(vec.back(), lane, {.speed = speed, .tumble = tumble, .type = ChompType::eDilator});
 }
 
-ChompType Board::try_score(Lane const lane) {
+auto Board::try_score(Lane const lane) -> Result {
 	struct {
 		Ptr<Entry> entry{};
 		float dist_sq{};
@@ -54,27 +53,27 @@ ChompType Board::try_score(Lane const lane) {
 	}
 	auto* world = static_cast<World*>(scene());
 	if (closest.entry && world->player->prop->rect().intersects(closest.entry->sprite.bounds())) {
-		auto const ret = closest.entry->chomp.type;
-		world->poof->spawn(closest.entry->sprite.transform().position);
+		auto const type = closest.entry->chomp.type;
+		auto const pos = closest.entry->sprite.transform().position;
 		release(vec, closest.entry);
-		return ret;
+		return {pos, type};
 	}
-	return ChompType::eNone;
+	return {};
 }
 
-ChompType Board::try_hit() {
-	auto const* player = static_cast<World*>(scene())->player;
+auto Board::try_hit() -> Result {
+	auto const* world = static_cast<World*>(scene());
 	for (auto& vec : m_entries.array) {
 		for (auto* entry : make_scratch(vec)) {
-			if (player->prop->rect().intersects(entry->sprite.bounds())) {
-				// TODO
-				auto const ret = entry->chomp.type;
+			if (world->player->prop->rect().intersects(entry->sprite.bounds())) {
+				auto const type = entry->chomp.type;
+				auto const pos = entry->sprite.transform().position;
 				release(vec, entry);
-				return ret;
+				return {pos, type};
 			}
 		}
 	}
-	return ChompType::eNone;
+	return {};
 }
 
 void Board::dilate_time(float const scale, tg::Time const duration) { m_dilator.enable(scale, duration); }

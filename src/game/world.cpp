@@ -19,10 +19,10 @@ void World::setup() {
 	hud = entity->attach<Hud>();
 
 	entity = spawn();
-	poof = entity->attach<Vfx>();
+	puff = entity->attach<Vfx>();
 
 	auto const* theme = tg::locate<Theme*>();
-	poof->sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->vfx.poof.sheet);
-	poof->ttl = tg::Time{theme->vfx.poof.duration};
+	puff->sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->vfx.puff.sheet);
+	puff->ttl = tg::Time{theme->vfx.puff.duration};
 }
 } // namespace cronch

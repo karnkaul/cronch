@@ -13,7 +13,7 @@ class Vfx : public tg::RenderAttachment {
 	Ptr<vf::Sprite::Sheet const> sheet{};
 	tg::Time ttl{1s};
 
-	void spawn(glm::vec2 position);
+	void spawn(glm::vec2 position, vf::Rgba tint = vf::white_v);
 
   private:
 	void setup() override;

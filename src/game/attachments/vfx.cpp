@@ -13,9 +13,10 @@ auto Vfx::Factory::operator()() const -> Entry {
 	return ret;
 }
 
-void Vfx::spawn(glm::vec2 position) {
+void Vfx::spawn(glm::vec2 position, vf::Rgba tint) {
 	auto& entry = m_entries.active.emplace_back(m_entries.pool.acquire());
 	entry.sprite.transform().position = position;
+	entry.sprite.tint() = tint;
 	if (sheet) { entry.sprite.set_sheet(*sheet, ttl); }
 	entry.ttl = ttl;
 }

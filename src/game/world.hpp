@@ -13,7 +13,7 @@ class World : public tg::Scene {
 	Ptr<Player> player{};
 	Ptr<Board> board{};
 	Ptr<Hud> hud{};
-	Ptr<Vfx> poof{};
+	Ptr<Vfx> puff{};
 
   private:
 	void setup() override;

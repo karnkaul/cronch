@@ -138,20 +138,20 @@ struct ThemeParser {
 		error();
 	}
 
-	void vfx_poof() {
+	void vfx_puff() {
 		if (terminal("sheet")) {
-			out.vfx.poof.sheet = std::move(value);
+			out.vfx.puff.sheet = std::move(value);
 			return;
 		}
 		if (terminal("duration")) {
-			out.vfx.poof.duration = static_cast<float>(std::atof(value.c_str()));
+			out.vfx.puff.duration = static_cast<float>(std::atof(value.c_str()));
 			return;
 		}
 		error();
 	}
 
 	void vfx() {
-		if (match("poof.")) { return vfx_poof(); }
+		if (match("puff.")) { return vfx_puff(); }
 		error();
 	}
 

@@ -1,6 +1,7 @@
 #include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
 #include <game/attachments/player.hpp>
+#include <game/attachments/vfx.hpp>
 #include <game/world.hpp>
 #include <glm/gtx/norm.hpp>
 #include <util/logger.hpp>
@@ -24,13 +25,16 @@ void Controller::tick(tg::DeltaTime dt) {
 	case State::eRetreat: retreat(dt); break;
 	case State::eCooldown: cool(dt); break;
 	}
-	switch (auto const chomp = world->board->try_hit()) {
-	case ChompType::eFood: {
-		// TODO
-		logger::debug("[Controller] took [{}] damage", chomp_type_str_v[chomp]);
-		break;
-	}
-	default: break;
+	if (auto const result = world->board->try_hit()) {
+		switch (result.type) {
+		case ChompType::eFood: {
+			world->puff->spawn(result.position, vf::red_v);
+			logger::debug("[Controller] took [{}] damage", chomp_type_str_v[result.type]);
+			// TODO: game over
+			break;
+		}
+		default: break;
+		}
 	}
 	if (vf::keyboard::pressed(vf::Key::eSpace) && world->player->try_dilate_time()) { logger::debug("[Controller] time dilation enabled"); }
 }
@@ -61,11 +65,16 @@ void Controller::advance(tg::DeltaTime dt) {
 void Controller::attack(tg::DeltaTime dt) {
 	if (!try_advance(dt)) { return; }
 	auto* world = static_cast<World*>(entity()->scene());
-	if (auto const chomp = world->board->try_score(m_dir.lane); chomp != ChompType::eNone) {
+	if (auto const result = world->board->try_score(m_dir.lane)) {
 		m_scored_hit = true;
 		m_state = State::eRetreat;
-		logger::debug("[Chomper] scored [{}] on lane [{}]", chomp_type_str_v[chomp], lane_str_v[m_dir.lane]);
-		if (chomp == ChompType::eDilator) { world->player->score_dilate(); }
+		logger::debug("[Chomper] scored [{}] on lane [{}]", chomp_type_str_v[result.type], lane_str_v[m_dir.lane]);
+		if (result.type == ChompType::eDilator) {
+			world->player->score_dilator();
+		} else {
+			// TODO increment score
+		}
+		world->puff->spawn(result.position);
 	}
 }
 

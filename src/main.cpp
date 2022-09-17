@@ -38,7 +38,7 @@ struct Debug : tg::TickAttachment {
 			}
 		}
 
-		if (pressed(vf::Key::eM)) { world->poof->spawn({}); }
+		if (pressed(vf::Key::eM)) { world->puff->spawn({}); }
 	}
 };
 
@@ -73,7 +73,7 @@ Theme load_theme(Resources& out) {
 	if (auto loaded = ret.load("theme.txt")) {
 		logger::info("[Theme] loaded [{}] entries", loaded);
 		out.load<vf::Sprite::Sheet>(ret.player.assets.sheet);
-		out.load<vf::Sprite::Sheet>(ret.vfx.poof.sheet);
+		out.load<vf::Sprite::Sheet>(ret.vfx.puff.sheet);
 		auto* sheet = out.load<vf::Sprite::Sheet>(ret.chomps.assets.sheet);
 		if (ret.chomps.data.uvs.last == 0) { ret.chomps.data.uvs.last = static_cast<std::uint32_t>(sheet->uv_count()); }
 	}

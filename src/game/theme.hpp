@@ -51,12 +51,12 @@ struct Theme {
 	};
 
 	struct Vfx {
-		struct Poof {
+		struct Data {
 			std::string sheet{};
 			float duration{0.25f};
 		};
 
-		Poof poof{};
+		Data puff{};
 	};
 
 	Chomps chomps{};

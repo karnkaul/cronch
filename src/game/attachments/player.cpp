@@ -8,12 +8,13 @@
 #include <game/world.hpp>
 
 namespace cronch {
-void Player::score_dilate() { m_dilates = std::clamp(max_dilates_v, 0, m_dilates + 1); }
+void Player::score_dilator() { m_dilators = std::clamp(m_dilators + 1, 0, max_dilators_v); }
 
 bool Player::try_dilate_time() {
-	if (m_dilates == 0) { return false; }
-	--m_dilates;
-	static_cast<World*>(scene())->board->dilate_time(dilation.scale, dilation.duration);
+	auto* board = static_cast<World*>(scene())->board;
+	if (board->dilator_enabled() || m_dilators == 0) { return false; }
+	--m_dilators;
+	board->dilate_time(dilation.scale, dilation.duration);
 	return true;
 }
 

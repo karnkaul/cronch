@@ -12,7 +12,7 @@ class SpriteRenderer;
 
 class Player : public SharedProp {
   public:
-	static constexpr int max_dilates_v{3};
+	static constexpr int max_dilators_v{3};
 
 	struct Dilation {
 		tg::Time duration{3s};
@@ -24,8 +24,10 @@ class Player : public SharedProp {
 	Ptr<SpriteRenderer<vf::Sprite>> sprite{};
 	Ptr<vf::Sprite::Sheet> sheet{};
 
-	void score_dilate();
+	void score_dilator();
 	bool try_dilate_time();
+
+	int dilator_count() const { return m_dilators; }
 
   private:
 	void setup() override;
@@ -33,6 +35,6 @@ class Player : public SharedProp {
 
 	Cache<std::uint32_t> m_uv{};
 	Theme::Player::Data m_data{};
-	int m_dilates{};
+	int m_dilators{};
 };
 } // namespace cronch

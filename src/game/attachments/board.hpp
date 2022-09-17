@@ -14,13 +14,21 @@ using namespace std::chrono_literals;
 
 class Board : public tg::RenderAttachment {
   public:
+	struct Result {
+		glm::vec2 position{};
+		ChompType type{};
+
+		explicit constexpr operator bool() const { return type > ChompType::eNone; }
+	};
+
 	static constexpr float speed_v{100.0f};
 
 	void spawn_food(Lane lane, vf::Radian tumble, float speed = speed_v);
 	void spawn_dilator(Lane lane, vf::Radian tumble, float speed = speed_v);
 	bool has_chomp(Lane lane) const { return !m_entries[lane].empty(); }
-	ChompType try_score(Lane lane);
-	ChompType try_hit();
+	Result try_score(Lane lane);
+	Result try_hit();
+	bool dilator_enabled() const { return m_dilator.remain > 0s; }
 	void dilate_time(float scale, tg::Time duration);
 
   private:
