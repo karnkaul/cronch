@@ -28,8 +28,8 @@ class Resources {
 
 	Resources(Context const& context);
 
-	template <typename Type>
-	Ptr<Type> load(Uri uri) {
+	template <typename Type, std::convertible_to<Uri> T>
+	Ptr<Type> load(T uri) {
 		if (auto ret = m_map.find<Type>(uri)) { return ret; }
 		return do_load<Type>(std::move(uri));
 	}

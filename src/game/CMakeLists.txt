@@ -1,6 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
-  attachments/chomper.cpp
-  attachments/chomper.hpp
+  attachments/board.cpp
+  attachments/board.hpp
   attachments/controller.cpp
   attachments/controller.hpp
   attachments/player.cpp

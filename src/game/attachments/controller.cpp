@@ -1,4 +1,4 @@
-#include <game/attachments/chomper.hpp>
+#include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
 #include <game/attachments/player.hpp>
 #include <game/world.hpp>
@@ -8,13 +8,15 @@
 #include <algorithm>
 
 namespace cronch {
+Controller::Dir::Dir(Lane lane) noexcept : lane{lane}, vec{to_vec2(lane)} {}
+
 void Controller::push(Lane const lane) {
 	if (m_queue.has_space()) { m_queue.push_back(lane); }
 }
 
 void Controller::tick(tg::DeltaTime dt) {
 	auto* world = static_cast<World*>(entity()->scene());
-	if (listen_keys) { push_keys(); }
+	if (listen_keys) { push_dirs(); }
 	switch (m_state) {
 	case State::eIdle: pop_dir(); break;
 	case State::eAdvance: advance(dt); break;
@@ -22,23 +24,27 @@ void Controller::tick(tg::DeltaTime dt) {
 	case State::eRetreat: retreat(dt); break;
 	case State::eCooldown: cool(dt); break;
 	}
-	if (world->chomper->did_hit()) {
+	switch (auto const chomp = world->board->try_hit()) {
+	case ChompType::eFood: {
 		// TODO
-		logger::debug("[Controller] chomper damage");
+		logger::debug("[Controller] took [{}] damage", chomp_type_str_v[chomp]);
+		break;
 	}
+	default: break;
+	}
+	if (vf::keyboard::pressed(vf::Key::eSpace) && world->player->try_dilate_time()) { logger::debug("[Controller] time dilation enabled"); }
 }
 
 void Controller::pop_dir() {
 	if (!m_queue.empty()) {
 		if (m_queue.size() > 1) { std::rotate(m_queue.begin(), m_queue.begin() + 1, m_queue.end()); }
-		m_lane = m_queue.back();
-		m_dir = to_vec2(m_lane);
+		m_dir = m_queue.back();
 		m_queue.pop_back();
 		m_state = State::eAdvance;
 	}
 }
 
-void Controller::push_keys() {
+void Controller::push_dirs() {
 	using vf::keyboard::pressed;
 	if (pressed(vf::Key::eA) || pressed(vf::Key::eLeft)) { push(Lane::eLeft); }
 	if (pressed(vf::Key::eW) || pressed(vf::Key::eUp)) { push(Lane::eUp); }
@@ -48,22 +54,23 @@ void Controller::push_keys() {
 
 void Controller::advance(tg::DeltaTime dt) {
 	auto* world = static_cast<World*>(entity()->scene());
-	if (world->chomper->has_chomper(m_lane)) { m_state = State::eAttack; }
+	if (world->board->has_chomp(m_dir.lane)) { m_state = State::eAttack; }
 	try_advance(dt);
 }
 
 void Controller::attack(tg::DeltaTime dt) {
 	if (!try_advance(dt)) { return; }
 	auto* world = static_cast<World*>(entity()->scene());
-	if (world->chomper->did_score(m_lane)) {
+	if (auto const chomp = world->board->try_score(m_dir.lane); chomp != ChompType::eNone) {
 		m_scored_hit = true;
 		m_state = State::eRetreat;
-		logger::debug("[Chomper] score on lane {}", lane_str_v[m_lane]);
+		logger::debug("[Chomper] scored [{}] on lane [{}]", chomp_type_str_v[chomp], lane_str_v[m_dir.lane]);
+		if (chomp == ChompType::eDilator) { world->player->score_dilate(); }
 	}
 }
 
 void Controller::retreat(tg::DeltaTime dt) {
-	prop->transform.position -= speed * dt.real.count() * m_dir;
+	prop->transform.position -= speed * dt.real.count() * m_dir.vec;
 	if (retreat_finished()) {
 		if (!m_scored_hit) {
 			m_state = State::eCooldown;
@@ -82,12 +89,12 @@ bool Controller::try_advance(tg::DeltaTime dt) {
 		m_state = State::eRetreat;
 		return false;
 	}
-	prop->transform.position += speed * dt.real.count() * m_dir;
+	prop->transform.position += speed * dt.real.count() * m_dir.vec;
 	return true;
 }
 
 bool Controller::retreat_finished() const {
-	switch (m_lane) {
+	switch (m_dir.lane) {
 	case Lane::eLeft: return prop->transform.position.x >= 0.0f;
 	case Lane::eUp: return prop->transform.position.y <= 0.0f;
 	case Lane::eRight: return prop->transform.position.x <= 0.0f;

@@ -2,8 +2,9 @@
 #include <engine/frame.hpp>
 #include <engine/io.hpp>
 #include <engine/resources.hpp>
-#include <game/attachments/chomper.hpp>
+#include <game/attachments/board.hpp>
 #include <game/attachments/player.hpp>
+#include <game/attachments/renderer.hpp>
 #include <game/layout.hpp>
 #include <game/world.hpp>
 #include <tardigrade/tardigrade.hpp>
@@ -30,13 +31,18 @@ struct Debug : tg::TickAttachment {
 	void setup() override {}
 	void tick(tg::DeltaTime) override {
 		auto* world = static_cast<World*>(scene());
+		using vf::keyboard::held;
 		using vf::keyboard::pressed;
 		if (pressed(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
 		if (pressed(vf::Key::eP)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
 			auto const lane = static_cast<Lane>(random_range(0UL, std::size(lanes_v) - 1));
 			auto const tumble = vf::Degree{random_range(-180.0f, 180.0f)};
-			world->chomper->spawn(lane, tumble);
+			if (held(vf::Key::eLeftControl) || held(vf::Key::eRightControl)) {
+				world->board->spawn_dilator(lane, tumble);
+			} else {
+				world->board->spawn_food(lane, tumble);
+			}
 		}
 	}
 };
@@ -82,10 +88,16 @@ int main(int, char** argv) {
 	tg::Services::provide(&context.vf_context.device());
 	auto io_instance = io::Instance{argv[0]};
 
-	auto director = tg::Director{};
-	auto& scene = director.enqueue<World>();
+	auto* sheet = resources.load<vf::Sprite::Sheet>("textures/test_sheet.txt");
 
-	scene.spawn<Debug>();
+	auto director = tg::Director{};
+	tg::Services::provide(&director);
+	auto& world = director.enqueue<World>();
+
+	world.spawn<Debug>();
+
+	world.player->sheet = sheet;
+	world.player->sprite->get().set_sheet(sheet);
 
 	context.vf_context.show();
 	while (!context.vf_context.closing()) {

@@ -3,6 +3,8 @@
 #include <tardigrade/tick_attachment.hpp>
 
 namespace cronch {
+using namespace std::chrono_literals;
+
 class SharedProp : public tg::TickAttachment {
   public:
 	Ptr<Prop> prop{};

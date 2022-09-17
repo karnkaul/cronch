@@ -1,4 +1,5 @@
 target_sources(${PROJECT_NAME} PRIVATE
+  cache.hpp
   common.hpp
   enum_array.hpp
   index_timeline.cpp

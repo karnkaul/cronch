@@ -4,12 +4,12 @@
 
 namespace cronch {
 class Player;
-class Chomper;
+class Board;
 
 class World : public tg::Scene {
   public:
 	Ptr<Player> player{};
-	Ptr<Chomper> chomper{};
+	Ptr<Board> board{};
 
   private:
 	void setup() override;
