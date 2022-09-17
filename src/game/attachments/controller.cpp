@@ -72,7 +72,7 @@ void Controller::attack(tg::DeltaTime dt) {
 		if (result.type == ChompType::eDilator) {
 			world->player->score_dilator();
 		} else {
-			// TODO increment score
+			world->player->score_chomp();
 		}
 		world->puff->spawn(result.position);
 	}
@@ -82,6 +82,7 @@ void Controller::retreat(tg::DeltaTime dt) {
 	prop->transform.position -= speed * dt.real.count() * m_dir.vec;
 	if (retreat_finished()) {
 		if (!m_scored_hit) {
+			static_cast<World*>(scene())->player->reset_multiplier();
 			m_state = State::eCooldown;
 			m_cooldown_remain = cooldown;
 		} else {

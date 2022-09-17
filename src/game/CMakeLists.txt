@@ -3,6 +3,7 @@ add_subdirectory(attachments)
 target_sources(${PROJECT_NAME} PRIVATE
   lane.hpp
   layout.hpp
+  score.hpp
   theme.cpp
   theme.hpp
   world.cpp

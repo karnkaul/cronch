@@ -9,9 +9,37 @@ using namespace std::chrono_literals;
 
 class Hud : public tg::RenderAttachment {
   public:
+	tg::Time popup_ttl{1s};
+	float popup_y_speed{100.0f};
+	vf::Text::Height popup_height{30};
+
+	void popup(std::string text, glm::vec2 position, vf::Rgba tint = vf::white_v);
+
   private:
 	void setup() override;
 	void tick(tg::DeltaTime dt) override;
 	void render(tg::RenderTarget const& target) const override;
+
+	void update_score(std::int64_t current);
+
+	struct Popup {
+		vf::Text text{};
+		tg::Time ttl{};
+	};
+
+	struct Factory {
+		Ptr<vf::Ttf> ttf{};
+
+		Popup operator()() const;
+	};
+
+	struct {
+		util::Pool<Popup, Factory> pool{};
+		std::vector<Popup> active{};
+	} m_popups{};
+	struct {
+		vf::Text text{};
+		std::int64_t previous{};
+	} m_score{};
 };
 } // namespace cronch

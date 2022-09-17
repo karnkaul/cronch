@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/animated_sprite.hpp>
 #include <game/attachments/shared_prop.hpp>
+#include <game/score.hpp>
 #include <game/theme.hpp>
 #include <util/cache.hpp>
 
@@ -24,9 +25,12 @@ class Player : public SharedProp {
 	Ptr<SpriteRenderer<vf::Sprite>> sprite{};
 	Ptr<vf::Sprite::Sheet> sheet{};
 
+	void score_chomp();
+	void reset_multiplier() { m_score.reset_multiplier(); }
 	void score_dilator();
 	bool try_dilate_time();
 
+	Score const& score() const { return m_score; }
 	int dilator_count() const { return m_dilators; }
 
   private:
@@ -35,6 +39,7 @@ class Player : public SharedProp {
 
 	Cache<std::uint32_t> m_uv{};
 	Theme::Player::Data m_data{};
+	Score m_score{};
 	int m_dilators{};
 };
 } // namespace cronch
