@@ -11,6 +11,21 @@
 #include <algorithm>
 
 namespace cronch {
+namespace {
+template <typename T>
+auto get_closest(T&& entries) {
+	struct {
+		Ptr<std::remove_reference_t<decltype(entries[0])>> entry{};
+		float dist_sq{};
+	} ret{};
+	for (auto& entry : entries) {
+		auto const dist_sq = glm::dot(entry.sprite.transform().position, entry.sprite.transform().position);
+		if (!ret.entry || dist_sq < ret.dist_sq) { ret = {&entry, dist_sq}; }
+	}
+	return ret.entry;
+}
+} // namespace
+
 void Board::Dilator::enable(float const scale, tg::Time const ttl) {
 	tg::locate<tg::Director*>()->set_time_scale(scale);
 	remain = ttl;
@@ -41,23 +56,19 @@ void Board::spawn_dilator(Lane const lane, vf::Radian const tumble) {
 	prepare(vec.back(), lane, {.speed = chomp_speed, .tumble = tumble, .type = ChompType::eDilator});
 }
 
-auto Board::test_hit(Lane const lane, vf::Rect const& rect) -> Result {
-	struct {
-		Ptr<Entry> entry{};
-		float dist_sq{};
-	} closest{};
-	auto& vec = m_entries[lane];
-	for (auto& entry : vec) {
-		auto const dist_sq = glm::dot(entry.sprite.transform().position, entry.sprite.transform().position);
-		if (!closest.entry || dist_sq < closest.dist_sq) { closest = {&entry, dist_sq}; }
-	}
-	if (closest.entry && rect.intersects(closest.entry->sprite.bounds())) {
-		auto const type = closest.entry->chomp.type;
-		auto const pos = closest.entry->sprite.transform().position;
-		release(vec, closest.entry);
-		return {pos, type, lane};
-	}
+std::optional<vf::Rect> Board::closest_chomp(Lane const lane) const {
+	if (auto const* entry = get_closest(m_entries[lane])) { return entry->sprite.bounds(); }
 	return {};
+}
+
+auto Board::test_hit(Lane const lane, vf::Rect const& rect) -> Result {
+	auto& vec = m_entries[lane];
+	auto* closest = get_closest(vec);
+	if (!closest || !rect.intersects(closest->sprite.bounds())) { return {}; }
+	auto const type = closest->chomp.type;
+	auto const pos = closest->sprite.transform().position;
+	release(vec, closest);
+	return {pos, type, lane};
 }
 
 void Board::dilate_time(float const scale, tg::Time const duration) { m_dilator.enable(scale, duration); }

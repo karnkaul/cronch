@@ -22,6 +22,7 @@ class Controller : public SharedProp {
 	Lane lane() const { return m_dir.lane; }
 	glm::vec2 dir() const { return m_dir.vec; }
 
+	bool can_chomp(vf::Rect const& target) const;
 	void push(Lane lane);
 
   private:
@@ -31,14 +32,14 @@ class Controller : public SharedProp {
 	void advance(tg::DeltaTime dt);
 	void retreat(tg::DeltaTime dt);
 	void cool(tg::DeltaTime dt);
+
 	void pop_dir();
+	bool try_advance(tg::DeltaTime dt);
+	bool retreat_finished() const;
 	void test_hit();
 
 	void score(glm::vec2 position, ChompType type);
 	void take_damage(glm::vec2 position);
-
-	bool try_advance(tg::DeltaTime dt);
-	bool retreat_finished() const;
 
 	struct Dir {
 		Lane lane{Lane::eRight};

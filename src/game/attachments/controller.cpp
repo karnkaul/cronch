@@ -11,6 +11,14 @@
 namespace cronch {
 Controller::Dir::Dir(Lane lane) noexcept : lane{lane}, vec{to_vec2(lane)} {}
 
+bool Controller::can_chomp(vf::Rect const& target) const {
+	auto to_target = target.offset - prop->transform.position;
+	if (glm::length2(to_target) < max_disp * max_disp) { return true; }
+	to_target = glm::normalize(to_target);
+	auto const rect = vf::Rect{{prop->bounds, max_disp * to_target}};
+	return rect.intersects(target);
+}
+
 void Controller::push(Lane const lane) {
 	if (m_queue.has_space()) { m_queue.push_back(lane); }
 }
@@ -27,48 +35,6 @@ void Controller::tick(tg::DeltaTime dt) {
 	}
 	if (vf::keyboard::pressed(vf::Key::eSpace) && world->player->try_dilate_time()) { logger::debug("[Controller] time dilation enabled"); }
 	test_hit();
-}
-
-void Controller::pop_dir() {
-	if (!m_queue.empty()) {
-		if (m_queue.size() > 1) { std::rotate(m_queue.begin(), m_queue.begin() + 1, m_queue.end()); }
-		m_dir = m_queue.back();
-		m_queue.pop_back();
-		m_state = State::eAdvance;
-	}
-}
-
-void Controller::test_hit() {
-	auto* world = static_cast<World*>(entity()->scene());
-	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {
-		auto const result = world->board->test_hit(lane, world->player->prop->rect());
-		if (!result) { continue; }
-		if ((m_state == State::eAttack || m_state == State::eAdvance) && m_dir.lane == result.lane) {
-			score(result.position, result.type);
-		} else if (result.type == ChompType::eFood) {
-			take_damage(result.position);
-		}
-	}
-}
-
-void Controller::score(glm::vec2 const position, ChompType const type) {
-	auto* world = static_cast<World*>(entity()->scene());
-	m_scored_hit = true;
-	m_state = State::eRetreat;
-	if (type == ChompType::eDilator) {
-		world->player->score_dilator();
-	} else {
-		world->player->score_chomp();
-	}
-	logger::debug("[Chomper] scored [{}] on lane [{}]", chomp_type_str_v[type], lane_str_v[m_dir.lane]);
-	world->puff->spawn(position);
-}
-
-void Controller::take_damage(glm::vec2 const position) {
-	auto* world = static_cast<World*>(entity()->scene());
-	world->puff->spawn(position, vf::red_v);
-	logger::debug("[Controller] took [{}] damage", chomp_type_str_v[ChompType::eFood]);
-	// TODO: game over
 }
 
 void Controller::push_dirs() {
@@ -100,6 +66,23 @@ void Controller::retreat(tg::DeltaTime dt) {
 	}
 }
 
+void Controller::cool(tg::DeltaTime dt) {
+	m_cooldown_remain -= dt.real;
+	if (m_cooldown_remain <= 0s) {
+		m_state = State::eIdle;
+		m_queue.clear();
+	}
+}
+
+void Controller::pop_dir() {
+	if (!m_queue.empty()) {
+		if (m_queue.size() > 1) { std::rotate(m_queue.begin(), m_queue.begin() + 1, m_queue.end()); }
+		m_dir = m_queue.back();
+		m_queue.pop_back();
+		m_state = State::eAdvance;
+	}
+}
+
 bool Controller::try_advance(tg::DeltaTime dt) {
 	if (glm::length2(prop->transform.position) > max_disp * max_disp) {
 		m_scored_hit = false;
@@ -120,11 +103,35 @@ bool Controller::retreat_finished() const {
 	}
 }
 
-void Controller::cool(tg::DeltaTime dt) {
-	m_cooldown_remain -= dt.real;
-	if (m_cooldown_remain <= 0s) {
-		m_state = State::eIdle;
-		m_queue.clear();
+void Controller::score(glm::vec2 const position, ChompType const type) {
+	auto* world = static_cast<World*>(entity()->scene());
+	m_scored_hit = true;
+	m_state = State::eRetreat;
+	if (type == ChompType::eDilator) {
+		world->player->score_dilator();
+	} else {
+		world->player->score_food();
 	}
+	world->puff->spawn(position);
+}
+
+void Controller::test_hit() {
+	auto* world = static_cast<World*>(entity()->scene());
+	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {
+		auto const result = world->board->test_hit(lane, prop->rect());
+		if (!result) { continue; }
+		if (m_dir.lane == result.lane && (m_state == State::eAttack || m_state == State::eAdvance)) {
+			score(result.position, result.type);
+		} else if (result.type == ChompType::eFood) {
+			take_damage(result.position);
+		}
+	}
+}
+
+void Controller::take_damage(glm::vec2 const position) {
+	auto* world = static_cast<World*>(entity()->scene());
+	world->player->reset_multiplier();
+	world->puff->spawn(position, vf::red_v);
+	// TODO: game over
 }
 } // namespace cronch

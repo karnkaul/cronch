@@ -8,8 +8,8 @@
 namespace cronch {
 class Controller;
 
-template <std::derived_from<vf::Sprite> Type>
-class SpriteRenderer;
+template <typename Type>
+class Renderer;
 
 class Player : public SharedProp {
   public:
@@ -20,10 +20,10 @@ class Player : public SharedProp {
 
 	Dilation dilation{};
 	Ptr<Controller> controller{};
-	Ptr<SpriteRenderer<vf::Sprite>> sprite{};
+	Ptr<Renderer<vf::Sprite>> sprite{};
 	Ptr<vf::Sprite::Sheet> sheet{};
 
-	void score_chomp();
+	void score_food();
 	void reset_multiplier() { m_score.reset_multiplier(); }
 	void score_dilator();
 	bool try_dilate_time();

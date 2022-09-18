@@ -6,6 +6,7 @@
 #include <util/common.hpp>
 #include <util/pool.hpp>
 #include <vulkify/graphics/primitives/sprite.hpp>
+#include <optional>
 
 namespace cronch {
 using namespace std::chrono_literals;
@@ -25,6 +26,7 @@ class Board : public tg::RenderAttachment {
 	void spawn_food(Lane lane, vf::Radian tumble);
 	void spawn_dilator(Lane lane, vf::Radian tumble);
 	bool has_chomp(Lane lane) const { return !m_entries[lane].empty(); }
+	std::optional<vf::Rect> closest_chomp(Lane lane) const;
 	Result test_hit(Lane lane, vf::Rect const& rect);
 	bool dilator_enabled() const { return m_dilator.remain > 0s; }
 	void dilate_time(float scale, tg::Time duration);

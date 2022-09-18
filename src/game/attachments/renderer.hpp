@@ -8,7 +8,7 @@
 
 namespace cronch {
 template <std::derived_from<vf::Primitive> Type>
-class Renderer : public tg::RenderAttachment {
+class TRenderer : public tg::RenderAttachment {
   public:
 	Type& get() { return m_t; }
 	Type const& get() const { return m_t; }
@@ -27,16 +27,21 @@ class Renderer : public tg::RenderAttachment {
 	Type m_t{};
 };
 
-template <std::derived_from<vf::Mesh> Type = vf::Mesh>
-class MeshRenderer : public Renderer<Type> {
+template <typename Type>
+class Renderer : public TRenderer<Type> {};
+
+template <typename Type>
+	requires(std::derived_from<Type, vf::Mesh>)
+class Renderer<Type> : public TRenderer<Type> {
   protected:
 	void tick(tg::DeltaTime) override {
 		if (auto const* prop = this->entity()->template find<Prop>()) { this->get().instance().transform = prop->transform; }
 	}
 };
 
-template <std::derived_from<vf::Sprite> Type = vf::Sprite>
-class SpriteRenderer : public Renderer<Type> {
+template <typename Type>
+	requires(std::derived_from<Type, vf::Sprite>)
+class Renderer<Type> : public TRenderer<Type> {
   protected:
 	void tick(tg::DeltaTime) override {
 		if (auto const* prop = this->entity()->template find<Prop>()) {

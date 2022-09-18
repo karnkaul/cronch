@@ -3,12 +3,14 @@
 #include <engine/io.hpp>
 #include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
+#include <game/attachments/controller.hpp>
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/vfx.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
+#include <glm/gtx/norm.hpp>
 #include <tardigrade/tardigrade.hpp>
 #include <util/logger.hpp>
 #include <util/random.hpp>
@@ -19,14 +21,44 @@ namespace cronch {
 namespace fs = std::filesystem;
 
 namespace {
-struct Debug : tg::TickAttachment {
+struct AutoPlay : tg::TickAttachment {
+	bool enabled{true};
+
 	void setup() override {}
+
+	void tick(tg::DeltaTime) override {
+		if (!enabled) { return; }
+		auto* world = static_cast<World*>(scene());
+		if (world->player->controller->state() != Controller::State::eIdle) { return; }
+		struct {
+			vf::Rect rect{};
+			Lane lane{};
+			float sqr_dist{};
+			bool valid{};
+		} target{};
+		for (Lane l = Lane{}; l < Lane::eCOUNT_; l = increment(l)) {
+			auto const closest = world->board->closest_chomp(l);
+			if (!closest) { continue; }
+			auto const sqr_dist = glm::length2(world->player->prop->transform.position - closest->offset);
+			if (!target.valid || sqr_dist < target.sqr_dist) { target = {*closest, l, sqr_dist, true}; }
+		}
+		if (!target.valid || !world->player->controller->can_chomp(target.rect)) { return; }
+
+		world->player->controller->push(target.lane);
+	}
+};
+
+struct Debug : tg::TickAttachment {
+	Ptr<AutoPlay> auto_play{};
+
+	void setup() override { auto_play = entity()->attach<AutoPlay>(); }
+
 	void tick(tg::DeltaTime) override {
 		auto* world = static_cast<World*>(scene());
 		using vf::keyboard::held;
-		using vf::keyboard::pressed;
-		if (pressed(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
-		if (pressed(vf::Key::eP)) {
+		using vf::keyboard::released;
+		if (released(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
+		if (released(vf::Key::eP)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
 			auto const lane = lanes_v[util::random_range(0UL, std::size(lanes_v) - 1)];
 			auto const tumble = vf::Degree{util::random_range(-180.0f, 180.0f)};
@@ -37,7 +69,7 @@ struct Debug : tg::TickAttachment {
 			}
 		}
 
-		if (pressed(vf::Key::eM)) { world->puff->spawn({}); }
+		if (released(vf::Key::eM)) { world->puff->spawn({}); }
 	}
 };
 
