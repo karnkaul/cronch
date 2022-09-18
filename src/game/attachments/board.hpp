@@ -1,4 +1,5 @@
 #pragma once
+#include <game/chomp_type.hpp>
 #include <game/lane.hpp>
 #include <game/theme.hpp>
 #include <tardigrade/render_attachment.hpp>
@@ -7,9 +8,6 @@
 #include <vulkify/graphics/primitives/sprite.hpp>
 
 namespace cronch {
-enum class ChompType : std::uint8_t { eNone, eFood, eDilator, eCOUNT_ };
-inline constexpr util::EnumArray<ChompType, std::string_view> chomp_type_str_v = {"none", "food", "dilator"};
-
 using namespace std::chrono_literals;
 
 class Board : public tg::RenderAttachment {
@@ -17,17 +15,17 @@ class Board : public tg::RenderAttachment {
 	struct Result {
 		glm::vec2 position{};
 		ChompType type{};
+		Lane lane{};
 
 		explicit constexpr operator bool() const { return type > ChompType::eNone; }
 	};
 
-	static constexpr float speed_v{100.0f};
+	float chomp_speed{100.0f};
 
-	void spawn_food(Lane lane, vf::Radian tumble, float speed = speed_v);
-	void spawn_dilator(Lane lane, vf::Radian tumble, float speed = speed_v);
+	void spawn_food(Lane lane, vf::Radian tumble);
+	void spawn_dilator(Lane lane, vf::Radian tumble);
 	bool has_chomp(Lane lane) const { return !m_entries[lane].empty(); }
-	Result try_score(Lane lane);
-	Result try_hit();
+	Result test_hit(Lane lane, vf::Rect const& rect);
 	bool dilator_enabled() const { return m_dilator.remain > 0s; }
 	void dilate_time(float scale, tg::Time duration);
 

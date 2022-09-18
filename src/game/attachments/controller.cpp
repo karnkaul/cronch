@@ -21,22 +21,12 @@ void Controller::tick(tg::DeltaTime dt) {
 	switch (m_state) {
 	case State::eIdle: pop_dir(); break;
 	case State::eAdvance: advance(dt); break;
-	case State::eAttack: attack(dt); break;
+	case State::eAttack: try_advance(dt); break;
 	case State::eRetreat: retreat(dt); break;
 	case State::eCooldown: cool(dt); break;
 	}
-	if (auto const result = world->board->try_hit()) {
-		switch (result.type) {
-		case ChompType::eFood: {
-			world->puff->spawn(result.position, vf::red_v);
-			logger::debug("[Controller] took [{}] damage", chomp_type_str_v[result.type]);
-			// TODO: game over
-			break;
-		}
-		default: break;
-		}
-	}
 	if (vf::keyboard::pressed(vf::Key::eSpace) && world->player->try_dilate_time()) { logger::debug("[Controller] time dilation enabled"); }
+	test_hit();
 }
 
 void Controller::pop_dir() {
@@ -46,6 +36,39 @@ void Controller::pop_dir() {
 		m_queue.pop_back();
 		m_state = State::eAdvance;
 	}
+}
+
+void Controller::test_hit() {
+	auto* world = static_cast<World*>(entity()->scene());
+	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {
+		auto const result = world->board->test_hit(lane, world->player->prop->rect());
+		if (!result) { continue; }
+		if ((m_state == State::eAttack || m_state == State::eAdvance) && m_dir.lane == result.lane) {
+			score(result.position, result.type);
+		} else if (result.type == ChompType::eFood) {
+			take_damage(result.position);
+		}
+	}
+}
+
+void Controller::score(glm::vec2 const position, ChompType const type) {
+	auto* world = static_cast<World*>(entity()->scene());
+	m_scored_hit = true;
+	m_state = State::eRetreat;
+	if (type == ChompType::eDilator) {
+		world->player->score_dilator();
+	} else {
+		world->player->score_chomp();
+	}
+	logger::debug("[Chomper] scored [{}] on lane [{}]", chomp_type_str_v[type], lane_str_v[m_dir.lane]);
+	world->puff->spawn(position);
+}
+
+void Controller::take_damage(glm::vec2 const position) {
+	auto* world = static_cast<World*>(entity()->scene());
+	world->puff->spawn(position, vf::red_v);
+	logger::debug("[Controller] took [{}] damage", chomp_type_str_v[ChompType::eFood]);
+	// TODO: game over
 }
 
 void Controller::push_dirs() {
@@ -60,22 +83,6 @@ void Controller::advance(tg::DeltaTime dt) {
 	auto* world = static_cast<World*>(entity()->scene());
 	if (world->board->has_chomp(m_dir.lane)) { m_state = State::eAttack; }
 	try_advance(dt);
-}
-
-void Controller::attack(tg::DeltaTime dt) {
-	if (!try_advance(dt)) { return; }
-	auto* world = static_cast<World*>(entity()->scene());
-	if (auto const result = world->board->try_score(m_dir.lane)) {
-		m_scored_hit = true;
-		m_state = State::eRetreat;
-		logger::debug("[Chomper] scored [{}] on lane [{}]", chomp_type_str_v[result.type], lane_str_v[m_dir.lane]);
-		if (result.type == ChompType::eDilator) {
-			world->player->score_dilator();
-		} else {
-			world->player->score_chomp();
-		}
-		world->puff->spawn(result.position);
-	}
 }
 
 void Controller::retreat(tg::DeltaTime dt) {

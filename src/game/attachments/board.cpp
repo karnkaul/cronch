@@ -29,19 +29,19 @@ Board::Entry Board::Factory::operator()() const {
 	return ret;
 }
 
-void Board::spawn_food(Lane const lane, vf::Radian const tumble, float const speed) {
+void Board::spawn_food(Lane const lane, vf::Radian const tumble) {
 	auto& vec = m_entries[lane];
 	vec.push_back(m_pool.acquire());
-	prepare(vec.back(), lane, {.speed = speed, .tumble = tumble, .type = ChompType::eFood});
+	prepare(vec.back(), lane, {.speed = chomp_speed, .tumble = tumble, .type = ChompType::eFood});
 }
 
-void Board::spawn_dilator(Lane const lane, vf::Radian const tumble, float const speed) {
+void Board::spawn_dilator(Lane const lane, vf::Radian const tumble) {
 	auto& vec = m_entries[lane];
 	vec.push_back(m_pool.acquire());
-	prepare(vec.back(), lane, {.speed = speed, .tumble = tumble, .type = ChompType::eDilator});
+	prepare(vec.back(), lane, {.speed = chomp_speed, .tumble = tumble, .type = ChompType::eDilator});
 }
 
-auto Board::try_score(Lane const lane) -> Result {
+auto Board::test_hit(Lane const lane, vf::Rect const& rect) -> Result {
 	struct {
 		Ptr<Entry> entry{};
 		float dist_sq{};
@@ -51,27 +51,11 @@ auto Board::try_score(Lane const lane) -> Result {
 		auto const dist_sq = glm::dot(entry.sprite.transform().position, entry.sprite.transform().position);
 		if (!closest.entry || dist_sq < closest.dist_sq) { closest = {&entry, dist_sq}; }
 	}
-	auto* world = static_cast<World*>(scene());
-	if (closest.entry && world->player->prop->rect().intersects(closest.entry->sprite.bounds())) {
+	if (closest.entry && rect.intersects(closest.entry->sprite.bounds())) {
 		auto const type = closest.entry->chomp.type;
 		auto const pos = closest.entry->sprite.transform().position;
 		release(vec, closest.entry);
-		return {pos, type};
-	}
-	return {};
-}
-
-auto Board::try_hit() -> Result {
-	auto const* world = static_cast<World*>(scene());
-	for (auto& vec : m_entries.array) {
-		for (auto* entry : make_scratch(vec)) {
-			if (world->player->prop->rect().intersects(entry->sprite.bounds())) {
-				auto const type = entry->chomp.type;
-				auto const pos = entry->sprite.transform().position;
-				release(vec, entry);
-				return {pos, type};
-			}
-		}
+		return {pos, type, lane};
 	}
 	return {};
 }
@@ -110,10 +94,10 @@ void Board::prepare(Entry& out, Lane const lane, Chomp chomp) {
 		auto uv_index = std::uint32_t{m_data.uvs.first};
 		if (m_data.uvs.last > m_data.uvs.first) { uv_index = util::random_range(m_data.uvs.first, m_data.uvs.last - 1); }
 		out.sprite.set_sheet(m_sheet, vf::Sprite::UvIndex{uv_index});
-		out.sprite.set_size(m_data.sizes.food);
+		out.sprite.set_size(layout::food_size);
 	} else {
 		out.sprite.set_sheet(m_sheet, vf::Sprite::UvIndex{m_data.uvs.dilator});
-		out.sprite.set_size(m_data.sizes.dilator);
+		out.sprite.set_size(layout::dilator_size);
 	}
 }
 

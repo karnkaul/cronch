@@ -13,8 +13,6 @@ class SpriteRenderer;
 
 class Player : public SharedProp {
   public:
-	static constexpr int max_dilators_v{3};
-
 	struct Dilation {
 		tg::Time duration{3s};
 		float scale{0.5f};

@@ -1,7 +1,9 @@
 #pragma once
+#include <game/layout.hpp>
 #include <tardigrade/render_attachment.hpp>
 #include <util/common.hpp>
 #include <util/pool.hpp>
+#include <vulkify/graphics/primitives/sprite.hpp>
 #include <vulkify/graphics/primitives/text.hpp>
 
 namespace cronch {
@@ -41,5 +43,9 @@ class Hud : public tg::RenderAttachment {
 		vf::Text text{};
 		std::int64_t previous{};
 	} m_score{};
+	struct {
+		std::array<vf::Sprite, layout::max_dilators_v> sprites{};
+		int count{};
+	} m_dilators{};
 };
 } // namespace cronch

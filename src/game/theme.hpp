@@ -14,7 +14,6 @@ struct Theme {
 				std::uint32_t idle{0};
 				std::uint32_t attack{1};
 			} uvs{};
-			glm::vec2 size{100.0f};
 		};
 
 		Assets assets{};
@@ -32,10 +31,6 @@ struct Theme {
 				std::uint32_t last{};
 				std::uint32_t dilator{};
 			} uvs{};
-			struct {
-				glm::vec2 food{75.0f};
-				glm::vec2 dilator{50.0f};
-			} sizes{};
 		};
 
 		Assets assets{};
@@ -47,7 +42,12 @@ struct Theme {
 			std::string font{};
 		};
 
+		struct Data {
+			std::uint32_t score_height{60};
+		};
+
 		Assets assets{};
+		Data data{};
 	};
 
 	struct Vfx {

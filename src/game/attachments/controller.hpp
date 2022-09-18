@@ -1,6 +1,8 @@
 #pragma once
 #include <game/attachments/shared_prop.hpp>
+#include <game/chomp_type.hpp>
 #include <game/lane.hpp>
+#include <game/layout.hpp>
 #include <ktl/fixed_vector.hpp>
 #include <vulkify/instance/key_event.hpp>
 
@@ -11,9 +13,9 @@ class Controller : public SharedProp {
 
 	enum class State : std::uint8_t { eIdle, eAdvance, eAttack, eRetreat, eCooldown };
 
-	float speed{1000.0f};
-	float max_disp{100.0f};
-	tg::Time cooldown{0.35s};
+	float speed{750.0f};
+	float max_disp{0.20f * static_cast<float>(layout::extent.x)};
+	tg::Time cooldown{0.20s};
 	bool listen_keys{true};
 
 	State state() const { return m_state; }
@@ -27,10 +29,13 @@ class Controller : public SharedProp {
 
 	void push_dirs();
 	void advance(tg::DeltaTime dt);
-	void attack(tg::DeltaTime dt);
 	void retreat(tg::DeltaTime dt);
 	void cool(tg::DeltaTime dt);
 	void pop_dir();
+	void test_hit();
+
+	void score(glm::vec2 position, ChompType type);
+	void take_damage(glm::vec2 position);
 
 	bool try_advance(tg::DeltaTime dt);
 	bool retreat_finished() const;

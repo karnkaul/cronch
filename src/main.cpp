@@ -5,7 +5,6 @@
 #include <game/attachments/board.hpp>
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
-#include <game/attachments/renderer.hpp>
 #include <game/attachments/vfx.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
@@ -29,7 +28,7 @@ struct Debug : tg::TickAttachment {
 		if (pressed(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
 		if (pressed(vf::Key::eP)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
-			auto const lane = static_cast<Lane>(util::random_range(0UL, std::size(lanes_v) - 1));
+			auto const lane = lanes_v[util::random_range(0UL, std::size(lanes_v) - 1)];
 			auto const tumble = vf::Degree{util::random_range(-180.0f, 180.0f)};
 			if (held(vf::Key::eLeftControl) || held(vf::Key::eRightControl)) {
 				world->board->spawn_dilator(lane, tumble);

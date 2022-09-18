@@ -64,10 +64,6 @@ struct ThemeParser {
 
 	void player_data() {
 		if (match("uv.")) { return player_uvs(); }
-		if (terminal("size")) {
-			out.player.data.size = get_vec2(value);
-			return;
-		}
 		error();
 	}
 
@@ -101,21 +97,8 @@ struct ThemeParser {
 		error();
 	}
 
-	void chomp_size() {
-		if (terminal("food")) {
-			out.chomps.data.sizes.food = get_vec2(value);
-			return;
-		}
-		if (terminal("dilator")) {
-			out.chomps.data.sizes.dilator = get_vec2(value);
-			return;
-		}
-		error();
-	}
-
 	void chomp_data() {
 		if (match("uv.")) { return chomp_uvs(); }
-		if (match("size.")) { return chomp_size(); }
 		error();
 	}
 
@@ -133,8 +116,17 @@ struct ThemeParser {
 		error();
 	}
 
+	void hud_data() {
+		if (terminal("score_height")) {
+			out.hud.data.score_height = static_cast<std::uint32_t>(std::atoi(value.c_str()));
+			return;
+		}
+		error();
+	}
+
 	void hud() {
 		if (match("assets.")) { return hud_assets(); }
+		if (match("data.")) { return hud_data(); }
 		error();
 	}
 

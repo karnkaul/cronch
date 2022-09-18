@@ -5,6 +5,7 @@
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/renderer.hpp>
+#include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
 #include <ktl/kformat.hpp>
@@ -17,7 +18,7 @@ void Player::score_chomp() {
 	world->hud->popup(text, prop->transform.position);
 }
 
-void Player::score_dilator() { m_dilators = std::clamp(m_dilators + 1, 0, max_dilators_v); }
+void Player::score_dilator() { m_dilators = std::clamp(m_dilators + 1, 0, layout::max_dilators_v); }
 
 bool Player::try_dilate_time() {
 	auto* board = static_cast<World*>(scene())->board;
@@ -39,7 +40,7 @@ void Player::setup() {
 	m_data = theme->player.data;
 
 	sprite->get().draw_invalid = true;
-	prop->bounds = {m_data.size};
+	prop->bounds = layout::player_size;
 }
 
 void Player::tick(tg::DeltaTime) {
