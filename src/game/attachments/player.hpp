@@ -1,17 +1,21 @@
 #pragma once
-#include <engine/animated_sprite.hpp>
-#include <game/attachments/shared_prop.hpp>
+#include <game/attachments/prop.hpp>
+#include <game/hit_result.hpp>
 #include <game/score.hpp>
 #include <game/theme.hpp>
+#include <tardigrade/tick_attachment.hpp>
 #include <util/cache.hpp>
+#include <vulkify/graphics/primitives/sprite.hpp>
 
 namespace cronch {
+using namespace std::chrono_literals;
+
 class Controller;
 
 template <typename Type>
 class Renderer;
 
-class Player : public SharedProp {
+class Player : public tg::TickAttachment {
   public:
 	struct Dilation {
 		tg::Time duration{3s};
@@ -21,12 +25,17 @@ class Player : public SharedProp {
 	Dilation dilation{};
 	Ptr<Controller> controller{};
 	Ptr<Renderer<vf::Sprite>> sprite{};
-	Ptr<vf::Sprite::Sheet> sheet{};
+	Ptr<vf::Sprite::Sheet const> sheet{};
+	Ptr<Prop> prop{};
 
-	void score_food();
+	bool can_hit(Lane lane) const;
+	HitResult attempt_hit(Lane lane);
+	std::optional<vf::Rect> raycast(Lane lane) const;
+
+	void score(glm::vec2 position, ChompType type);
 	void reset_multiplier() { m_score.reset_multiplier(); }
-	void score_dilator();
 	bool try_dilate_time();
+	void take_damage(glm::vec2 position);
 
 	Score const& score() const { return m_score; }
 	int dilator_count() const { return m_dilators; }

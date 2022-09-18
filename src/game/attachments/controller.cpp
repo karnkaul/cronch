@@ -1,8 +1,6 @@
-#include <game/attachments/board.hpp>
+// #include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
 #include <game/attachments/player.hpp>
-#include <game/attachments/vfx.hpp>
-#include <game/world.hpp>
 #include <glm/gtx/norm.hpp>
 #include <util/logger.hpp>
 #include <vulkify/instance/keyboard.hpp>
@@ -12,6 +10,7 @@ namespace cronch {
 Controller::Dir::Dir(Lane lane) noexcept : lane{lane}, vec{to_vec2(lane)} {}
 
 bool Controller::can_chomp(vf::Rect const& target) const {
+	auto* prop = m_player->prop;
 	auto to_target = target.offset - prop->transform.position;
 	if (glm::length2(to_target) < max_disp * max_disp) { return true; }
 	to_target = glm::normalize(to_target);
@@ -24,7 +23,7 @@ void Controller::push(Lane const lane) {
 }
 
 void Controller::tick(tg::DeltaTime dt) {
-	auto* world = static_cast<World*>(entity()->scene());
+	if (!refresh_player()) { return; }
 	if (listen_keys) { push_dirs(); }
 	switch (m_state) {
 	case State::eIdle: pop_dir(); break;
@@ -33,7 +32,7 @@ void Controller::tick(tg::DeltaTime dt) {
 	case State::eRetreat: retreat(dt); break;
 	case State::eCooldown: cool(dt); break;
 	}
-	if (vf::keyboard::pressed(vf::Key::eSpace) && world->player->try_dilate_time()) { logger::debug("[Controller] time dilation enabled"); }
+	if (vf::keyboard::pressed(vf::Key::eSpace)) { m_player->try_dilate_time(); }
 	test_hit();
 }
 
@@ -46,23 +45,22 @@ void Controller::push_dirs() {
 }
 
 void Controller::advance(tg::DeltaTime dt) {
-	auto* world = static_cast<World*>(entity()->scene());
-	if (world->board->has_chomp(m_dir.lane)) { m_state = State::eAttack; }
+	if (m_player->can_hit(m_dir.lane)) { m_state = State::eAttack; }
 	try_advance(dt);
 }
 
 void Controller::retreat(tg::DeltaTime dt) {
-	prop->transform.position -= speed * dt.real.count() * m_dir.vec;
+	m_player->prop->transform.position -= speed * dt.real.count() * m_dir.vec;
 	if (retreat_finished()) {
 		if (!m_scored_hit) {
-			static_cast<World*>(scene())->player->reset_multiplier();
+			m_player->reset_multiplier();
 			m_state = State::eCooldown;
 			m_cooldown_remain = cooldown;
 		} else {
 			m_scored_hit = false;
 			m_state = State::eIdle;
 		}
-		prop->transform.position = {};
+		m_player->prop->transform.position = {};
 	}
 }
 
@@ -84,16 +82,17 @@ void Controller::pop_dir() {
 }
 
 bool Controller::try_advance(tg::DeltaTime dt) {
-	if (glm::length2(prop->transform.position) > max_disp * max_disp) {
+	if (glm::length2(m_player->prop->transform.position) > max_disp * max_disp) {
 		m_scored_hit = false;
 		m_state = State::eRetreat;
 		return false;
 	}
-	prop->transform.position += speed * dt.real.count() * m_dir.vec;
+	m_player->prop->transform.position += speed * dt.real.count() * m_dir.vec;
 	return true;
 }
 
 bool Controller::retreat_finished() const {
+	auto* prop = m_player->prop;
 	switch (m_dir.lane) {
 	case Lane::eLeft: return prop->transform.position.x >= 0.0f;
 	case Lane::eUp: return prop->transform.position.y <= 0.0f;
@@ -104,34 +103,29 @@ bool Controller::retreat_finished() const {
 }
 
 void Controller::score(glm::vec2 const position, ChompType const type) {
-	auto* world = static_cast<World*>(entity()->scene());
 	m_scored_hit = true;
 	m_state = State::eRetreat;
-	if (type == ChompType::eDilator) {
-		world->player->score_dilator();
-	} else {
-		world->player->score_food();
-	}
-	world->puff->spawn(position);
+	m_player->score(position, type);
 }
 
 void Controller::test_hit() {
-	auto* world = static_cast<World*>(entity()->scene());
 	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {
-		auto const result = world->board->test_hit(lane, prop->rect());
+		auto const result = m_player->attempt_hit(lane);
 		if (!result) { continue; }
 		if (m_dir.lane == result.lane && (m_state == State::eAttack || m_state == State::eAdvance)) {
 			score(result.position, result.type);
 		} else if (result.type == ChompType::eFood) {
-			take_damage(result.position);
+			m_player->take_damage(result.position);
 		}
 	}
 }
 
-void Controller::take_damage(glm::vec2 const position) {
-	auto* world = static_cast<World*>(entity()->scene());
-	world->player->reset_multiplier();
-	world->puff->spawn(position, vf::red_v);
-	// TODO: game over
+bool Controller::refresh_player() {
+	m_player = entity()->find<Player>();
+	if (!m_player) {
+		logger::warn("[Controller] Player not attached");
+		return false;
+	}
+	return true;
 }
 } // namespace cronch

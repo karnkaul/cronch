@@ -1,10 +1,8 @@
 #include <engine/frame.hpp>
 #include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
-#include <game/attachments/player.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
-#include <game/world.hpp>
 #include <tardigrade/director.hpp>
 #include <tardigrade/services.hpp>
 #include <util/random.hpp>
@@ -39,7 +37,7 @@ void Board::Dilator::tick(tg::DeltaTime const dt) {
 
 Board::Entry Board::Factory::operator()() const {
 	auto ret = Entry{};
-	ret.sprite = AnimatedSprite{*tg::locate<vf::GfxDevice const*>()};
+	ret.sprite = vf::Sprite{*tg::locate<vf::GfxDevice const*>()};
 	ret.sprite.draw_invalid = true;
 	return ret;
 }
@@ -56,12 +54,7 @@ void Board::spawn_dilator(Lane const lane, vf::Radian const tumble) {
 	prepare(vec.back(), lane, {.speed = chomp_speed, .tumble = tumble, .type = ChompType::eDilator});
 }
 
-std::optional<vf::Rect> Board::closest_chomp(Lane const lane) const {
-	if (auto const* entry = get_closest(m_entries[lane])) { return entry->sprite.bounds(); }
-	return {};
-}
-
-auto Board::test_hit(Lane const lane, vf::Rect const& rect) -> Result {
+HitResult Board::attempt_hit(Lane const lane, vf::Rect const& rect) {
 	auto& vec = m_entries[lane];
 	auto* closest = get_closest(vec);
 	if (!closest || !rect.intersects(closest->sprite.bounds())) { return {}; }
@@ -69,6 +62,11 @@ auto Board::test_hit(Lane const lane, vf::Rect const& rect) -> Result {
 	auto const pos = closest->sprite.transform().position;
 	release(vec, closest);
 	return {pos, type, lane};
+}
+
+std::optional<vf::Rect> Board::raycast(Lane const lane) const {
+	if (auto const* entry = get_closest(m_entries[lane])) { return entry->sprite.bounds(); }
+	return {};
 }
 
 void Board::dilate_time(float const scale, tg::Time const duration) { m_dilator.enable(scale, duration); }

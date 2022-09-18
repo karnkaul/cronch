@@ -1,13 +1,19 @@
 #pragma once
-#include <game/attachments/shared_prop.hpp>
 #include <game/chomp_type.hpp>
 #include <game/lane.hpp>
 #include <game/layout.hpp>
 #include <ktl/fixed_vector.hpp>
+#include <tardigrade/tick_attachment.hpp>
+#include <util/common.hpp>
+#include <vulkify/core/rect.hpp>
 #include <vulkify/instance/key_event.hpp>
 
 namespace cronch {
-class Controller : public SharedProp {
+using namespace std::chrono_literals;
+
+class Player;
+
+class Controller : public tg::TickAttachment {
   public:
 	static constexpr std::size_t queue_size_v{4};
 
@@ -26,6 +32,7 @@ class Controller : public SharedProp {
 	void push(Lane lane);
 
   private:
+	void setup() override {}
 	void tick(tg::DeltaTime dt) override;
 
 	void push_dirs();
@@ -39,7 +46,7 @@ class Controller : public SharedProp {
 	void test_hit();
 
 	void score(glm::vec2 position, ChompType type);
-	void take_damage(glm::vec2 position);
+	bool refresh_player();
 
 	struct Dir {
 		Lane lane{Lane::eRight};
@@ -53,6 +60,7 @@ class Controller : public SharedProp {
 	Dir m_dir{};
 	tg::Time m_cooldown_remain{};
 	State m_state{};
+	Ptr<Player> m_player{};
 	bool m_scored_hit{};
 };
 } // namespace cronch

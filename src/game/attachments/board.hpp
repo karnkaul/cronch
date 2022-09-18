@@ -1,6 +1,5 @@
 #pragma once
-#include <game/chomp_type.hpp>
-#include <game/lane.hpp>
+#include <game/hit_result.hpp>
 #include <game/theme.hpp>
 #include <tardigrade/render_attachment.hpp>
 #include <util/common.hpp>
@@ -13,21 +12,13 @@ using namespace std::chrono_literals;
 
 class Board : public tg::RenderAttachment {
   public:
-	struct Result {
-		glm::vec2 position{};
-		ChompType type{};
-		Lane lane{};
-
-		explicit constexpr operator bool() const { return type > ChompType::eNone; }
-	};
-
 	float chomp_speed{100.0f};
 
 	void spawn_food(Lane lane, vf::Radian tumble);
 	void spawn_dilator(Lane lane, vf::Radian tumble);
-	bool has_chomp(Lane lane) const { return !m_entries[lane].empty(); }
-	std::optional<vf::Rect> closest_chomp(Lane lane) const;
-	Result test_hit(Lane lane, vf::Rect const& rect);
+	bool can_hit(Lane lane) const { return !m_entries[lane].empty(); }
+	HitResult attempt_hit(Lane lane, vf::Rect const& rect);
+	std::optional<vf::Rect> raycast(Lane lane) const;
 	bool dilator_enabled() const { return m_dilator.remain > 0s; }
 	void dilate_time(float scale, tg::Time duration);
 

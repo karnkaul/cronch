@@ -9,7 +9,6 @@ target_sources(${PROJECT_NAME} PRIVATE
   player.hpp
   prop.hpp
   renderer.hpp
-  shared_prop.hpp
   vfx.cpp
   vfx.hpp
 )

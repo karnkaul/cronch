@@ -4,7 +4,6 @@
 #include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <tardigrade/services.hpp>
-#include <vulkify/ttf/ttf.hpp>
 
 namespace cronch {
 auto Vfx::Factory::operator()() const -> Entry {

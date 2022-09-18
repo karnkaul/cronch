@@ -37,7 +37,7 @@ struct AutoPlay : tg::TickAttachment {
 			bool valid{};
 		} target{};
 		for (Lane l = Lane{}; l < Lane::eCOUNT_; l = increment(l)) {
-			auto const closest = world->board->closest_chomp(l);
+			auto const closest = world->player->raycast(l);
 			if (!closest) { continue; }
 			auto const sqr_dist = glm::length2(world->player->prop->transform.position - closest->offset);
 			if (!target.valid || sqr_dist < target.sqr_dist) { target = {*closest, l, sqr_dist, true}; }
