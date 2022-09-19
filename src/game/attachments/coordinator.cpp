@@ -20,8 +20,16 @@ void Coordinator::score(Event::Score const& score) {
 	auto* world = static_cast<World*>(scene());
 	switch (score.chomp_type) {
 	case ChompType::eFood: {
-		auto text = ktl::kformat("{}x", world->player->score_food());
-		world->hud->popup(std::move(text), world->player->prop->transform.position);
+		auto toast = Toast{
+			.text = ktl::kformat("{}x", world->player->score_food()),
+			.position = world->player->prop->transform.position,
+			.tick =
+				[](vf::Text& text, tg::DeltaTime dt, float const t) {
+					text.tint().channels[3] = static_cast<vf::Rgba::Channel>((1.0f - t) * 0xff);
+					text.transform().position.y += dt.real.count() * 100.0f;
+				},
+		};
+		world->hud->spawn(std::move(toast));
 		break;
 	}
 	case ChompType::eDilator: {

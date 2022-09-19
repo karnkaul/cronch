@@ -9,13 +9,23 @@
 namespace cronch {
 using namespace std::chrono_literals;
 
+struct Toast {
+	using Tick = void (*)(vf::Text&, tg::DeltaTime, float);
+
+	std::string text{};
+	glm::vec2 position{};
+	vf::Rgba tint{vf::white_v};
+	tg::Time ttl{1s};
+	Tick tick{};
+};
+
 class Hud : public tg::RenderAttachment {
   public:
 	tg::Time popup_ttl{1s};
 	float popup_y_speed{100.0f};
 	vf::Text::Height popup_height{30};
 
-	void popup(std::string text, glm::vec2 position, vf::Rgba tint = vf::white_v);
+	void spawn(Toast toast);
 
   private:
 	void setup() override;
@@ -26,12 +36,13 @@ class Hud : public tg::RenderAttachment {
 
 	struct Popup {
 		vf::Text text{};
+		tg::Time elapsed{};
 		tg::Time ttl{};
+		Toast::Tick tick{};
 	};
 
 	struct Factory {
 		Ptr<vf::Ttf> ttf{};
-
 		Popup operator()() const;
 	};
 

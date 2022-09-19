@@ -5,10 +5,15 @@
 #include <game/world.hpp>
 #include <glm/gtx/norm.hpp>
 #include <util/logger.hpp>
+#include <util/random.hpp>
 #include <vulkify/instance/keyboard.hpp>
 #include <algorithm>
 
 namespace cronch {
+namespace {
+glm::vec2 randomize(glm::vec2 const range) { return {util::random_range(-range.x, range.x), util::random_range(-range.y, range.y)}; }
+} // namespace
+
 Controller::Dir::Dir(Lane lane) noexcept : lane{lane}, vec{to_vec2(lane)} {}
 
 bool Controller::can_chomp(vf::Rect const& target) const {
@@ -25,18 +30,22 @@ void Controller::push(Lane const lane) {
 }
 
 void Controller::reset() {
-	m_cooldown_remain = {};
+	flags &= ~eDisabled;
 	m_queue.clear();
+	m_position = {};
+	m_cooldown_remain = {};
 	if (m_state != State::eIdle) {
 		m_scored_hit = true;
 		m_state = State::eRetreat;
 	}
-	flags &= ~eDisabled;
 }
 
 void Controller::tick(tg::DeltaTime dt) {
+	m_player->prop->transform.position = m_position;
+
 	if ((flags & eDisabled) || !refresh()) { return; }
 	if (flags & eListenKeys) { push_dirs(); }
+
 	switch (m_state) {
 	case State::eIdle: pop_dir(); break;
 	case State::eAdvance: advance(dt); break;
@@ -44,9 +53,13 @@ void Controller::tick(tg::DeltaTime dt) {
 	case State::eRetreat: retreat(dt); break;
 	case State::eCooldown: cool(dt); break;
 	}
-	if (vf::keyboard::pressed(vf::Key::eSpace) && !m_board->dilator_enabled()) {
-		m_board->dilate_time(m_player->dilation.scale, m_player->dilation.duration);
-		m_player->consume_dilator();
+
+	if (m_board->dilator_enabled()) {
+		m_player->prop->transform.position += randomize({vibrate, vibrate});
+	} else {
+		if (vf::keyboard::pressed(vf::Key::eSpace) && m_player->consume_dilator()) {
+			m_board->dilate_time(m_player->dilation.scale, m_player->dilation.duration);
+		}
 	}
 	test_hit();
 }
@@ -65,7 +78,7 @@ void Controller::advance(tg::DeltaTime dt) {
 }
 
 void Controller::retreat(tg::DeltaTime dt) {
-	m_player->prop->transform.position -= speed * dt.real.count() * m_dir.vec;
+	m_position -= speed * dt.real.count() * m_dir.vec;
 	if (retreat_finished()) {
 		if (!m_scored_hit) {
 			m_player->reset_multiplier();
@@ -75,7 +88,7 @@ void Controller::retreat(tg::DeltaTime dt) {
 			m_scored_hit = false;
 			m_state = State::eIdle;
 		}
-		m_player->prop->transform.position = {};
+		m_position = {};
 	}
 }
 
@@ -97,12 +110,12 @@ void Controller::pop_dir() {
 }
 
 bool Controller::try_advance(tg::DeltaTime dt) {
-	if (glm::length2(m_player->prop->transform.position) > max_disp * max_disp) {
+	if (glm::length2(m_position) > max_disp * max_disp) {
 		m_scored_hit = false;
 		m_state = State::eRetreat;
 		return false;
 	}
-	m_player->prop->transform.position += speed * dt.real.count() * m_dir.vec;
+	m_position += speed * dt.real.count() * m_dir.vec;
 	return true;
 }
 

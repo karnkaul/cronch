@@ -33,13 +33,15 @@ auto Hud::Factory::operator()() const -> Popup {
 	return ret;
 }
 
-void Hud::popup(std::string text, glm::vec2 position, vf::Rgba const tint) {
+void Hud::spawn(Toast toast) {
 	auto& popup = m_popups.active.emplace_back(m_popups.pool.acquire());
-	popup.text.set_string(std::move(text));
-	popup.text.transform().position = position;
-	popup.text.tint() = tint;
+	popup.text.set_string(std::move(toast.text));
+	popup.text.transform().position = toast.position;
+	popup.text.tint() = toast.tint;
 	popup.text.set_height(popup_height);
-	popup.ttl = popup_ttl;
+	popup.elapsed = {};
+	popup.ttl = toast.ttl;
+	popup.tick = toast.tick;
 }
 
 void Hud::setup() {
@@ -76,12 +78,14 @@ void Hud::setup() {
 
 void Hud::tick(tg::DeltaTime dt) {
 	for (auto& popup : m_popups.active) {
-		popup.ttl -= dt.real;
-		popup.text.tint().channels[3] = static_cast<vf::Rgba::Channel>((popup.ttl / popup_ttl) * 0xff);
-		popup.text.transform().position.y += dt.real.count() * popup_y_speed;
+		popup.elapsed += dt.real;
+		if (popup.tick) {
+			auto const t = popup.elapsed / popup.ttl;
+			popup.tick(popup.text, dt, t);
+		}
 	}
 	auto const func = [this](Popup& p) {
-		if (p.ttl <= 0s) {
+		if (p.elapsed > p.ttl) {
 			m_popups.pool.release(std::move(p));
 			return true;
 		}

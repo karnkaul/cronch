@@ -30,10 +30,15 @@ void Board::Dilator::enable(float const scale, tg::Time const ttl) {
 	remain = ttl;
 }
 
+void Board::Dilator::disable() {
+	remain = 0s;
+	tg::locate<tg::Director*>()->set_time_scale(1.0f);
+}
+
 void Board::Dilator::tick(tg::DeltaTime const dt) {
 	if (remain <= 0s) { return; }
 	remain -= dt.real;
-	if (remain <= 0s) { tg::locate<tg::Director*>()->set_time_scale(1.0f); }
+	if (remain <= 0s) { disable(); }
 }
 
 Board::Entry Board::Factory::operator()() const {
@@ -74,7 +79,7 @@ void Board::dilate_time(float const scale, tg::Time const duration) { m_dilator.
 
 void Board::reset() {
 	for (auto& entries : m_entries.array) { entries.clear(); }
-	m_dilator.remain = 0s;
+	m_dilator.disable();
 }
 
 void Board::setup() {

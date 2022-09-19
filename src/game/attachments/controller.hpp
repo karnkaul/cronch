@@ -26,6 +26,7 @@ class Controller : public tg::TickAttachment {
 	float max_disp{0.20f * static_cast<float>(layout::extent.x)};
 	tg::Time cooldown{0.20s};
 	std::uint32_t flags{eListenKeys};
+	float vibrate{2.0f};
 
 	State state() const { return m_state; }
 	Lane lane() const { return m_dir.lane; }
@@ -63,6 +64,7 @@ class Controller : public tg::TickAttachment {
 
 	ktl::fixed_vector<Lane, queue_size_v> m_queue{};
 	Dir m_dir{};
+	glm::vec2 m_position{};
 	tg::Time m_cooldown_remain{};
 	State m_state{};
 	Ptr<Player> m_player{};

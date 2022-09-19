@@ -35,6 +35,7 @@ class Board : public tg::RenderAttachment {
 		tg::Time remain{};
 
 		void enable(float scale, tg::Time ttl);
+		void disable();
 		void tick(tg::DeltaTime dt);
 	};
 
