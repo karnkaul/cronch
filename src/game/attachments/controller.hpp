@@ -12,9 +12,12 @@ namespace cronch {
 using namespace std::chrono_literals;
 
 class Player;
+class Board;
 
 class Controller : public tg::TickAttachment {
   public:
+	enum Flag : std::uint32_t { eListenKeys = 1 << 0, eDisabled = 1 << 1 };
+
 	static constexpr std::size_t queue_size_v{4};
 
 	enum class State : std::uint8_t { eIdle, eAdvance, eAttack, eRetreat, eCooldown };
@@ -22,7 +25,7 @@ class Controller : public tg::TickAttachment {
 	float speed{750.0f};
 	float max_disp{0.20f * static_cast<float>(layout::extent.x)};
 	tg::Time cooldown{0.20s};
-	bool listen_keys{true};
+	std::uint32_t flags{eListenKeys};
 
 	State state() const { return m_state; }
 	Lane lane() const { return m_dir.lane; }
@@ -30,6 +33,7 @@ class Controller : public tg::TickAttachment {
 
 	bool can_chomp(vf::Rect const& target) const;
 	void push(Lane lane);
+	void reset();
 
   private:
 	void setup() override {}
@@ -46,7 +50,8 @@ class Controller : public tg::TickAttachment {
 	void test_hit();
 
 	void score(glm::vec2 position, ChompType type);
-	bool refresh_player();
+	void damage(glm::vec2 position);
+	bool refresh();
 
 	struct Dir {
 		Lane lane{Lane::eRight};
@@ -61,6 +66,7 @@ class Controller : public tg::TickAttachment {
 	tg::Time m_cooldown_remain{};
 	State m_state{};
 	Ptr<Player> m_player{};
+	Ptr<Board> m_board{};
 	bool m_scored_hit{};
 };
 } // namespace cronch

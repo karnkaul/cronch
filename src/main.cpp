@@ -4,9 +4,11 @@
 #include <engine/resources.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
+#include <game/attachments/dispatch.hpp>
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/vfx.hpp>
+#include <game/event.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
@@ -22,7 +24,7 @@ namespace fs = std::filesystem;
 
 namespace {
 struct AutoPlay : tg::TickAttachment {
-	bool enabled{true};
+	bool enabled{};
 
 	void setup() override {}
 
@@ -37,7 +39,7 @@ struct AutoPlay : tg::TickAttachment {
 			bool valid{};
 		} target{};
 		for (Lane l = Lane{}; l < Lane::eCOUNT_; l = increment(l)) {
-			auto const closest = world->player->raycast(l);
+			auto const closest = world->board->raycast(l);
 			if (!closest) { continue; }
 			auto const sqr_dist = glm::length2(world->player->prop->transform.position - closest->offset);
 			if (!target.valid || sqr_dist < target.sqr_dist) { target = {*closest, l, sqr_dist, true}; }
@@ -58,7 +60,7 @@ struct Debug : tg::TickAttachment {
 		using vf::keyboard::held;
 		using vf::keyboard::released;
 		if (released(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
-		if (released(vf::Key::eP)) {
+		if (released(vf::Key::eT)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
 			auto const lane = lanes_v[util::random_range(0UL, std::size(lanes_v) - 1)];
 			auto const tumble = vf::Degree{util::random_range(-180.0f, 180.0f)};
@@ -69,7 +71,8 @@ struct Debug : tg::TickAttachment {
 			}
 		}
 
-		if (released(vf::Key::eM)) { world->puff->spawn({}); }
+		if (released(vf::Key::eR)) { world->dispatch->dispatch(Event::Reset{}); }
+		if (released(vf::Key::eP)) { auto_play->enabled = !auto_play->enabled; }
 	}
 };
 

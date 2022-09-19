@@ -3,6 +3,7 @@
 #include <game/attachments/board.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
+#include <game/world.hpp>
 #include <tardigrade/director.hpp>
 #include <tardigrade/services.hpp>
 #include <util/random.hpp>
@@ -71,7 +72,14 @@ std::optional<vf::Rect> Board::raycast(Lane const lane) const {
 
 void Board::dilate_time(float const scale, tg::Time const duration) { m_dilator.enable(scale, duration); }
 
+void Board::reset() {
+	for (auto& entries : m_entries.array) { entries.clear(); }
+	m_dilator.remain = 0s;
+}
+
 void Board::setup() {
+	tg::RenderAttachment::setup();
+
 	auto const* theme = tg::locate<Theme*>();
 	m_sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->chomps.assets.sheet);
 	m_data = theme->chomps.data;

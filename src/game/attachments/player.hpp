@@ -17,6 +17,8 @@ class Renderer;
 
 class Player : public tg::TickAttachment {
   public:
+	enum class State { eAlive, eDead };
+
 	struct Dilation {
 		tg::Time duration{3s};
 		float scale{0.5f};
@@ -28,17 +30,17 @@ class Player : public tg::TickAttachment {
 	Ptr<vf::Sprite::Sheet const> sheet{};
 	Ptr<Prop> prop{};
 
-	bool can_hit(Lane lane) const;
-	HitResult attempt_hit(Lane lane);
-	std::optional<vf::Rect> raycast(Lane lane) const;
+	std::int64_t score_food();
+	void score_dilator();
+	void take_damage();
+	bool consume_dilator();
+	void reset_multiplier() { m_storage.score.reset_multiplier(); }
 
-	void score(glm::vec2 position, ChompType type);
-	void reset_multiplier() { m_score.reset_multiplier(); }
-	bool try_dilate_time();
-	void take_damage(glm::vec2 position);
+	State state() const { return m_storage.state; }
+	Score const& score() const { return m_storage.score; }
+	int dilator_count() const { return m_storage.dilators; }
 
-	Score const& score() const { return m_score; }
-	int dilator_count() const { return m_dilators; }
+	void reset();
 
   private:
 	void setup() override;
@@ -46,7 +48,10 @@ class Player : public tg::TickAttachment {
 
 	Cache<std::uint32_t> m_uv{};
 	Theme::Player::Data m_data{};
-	Score m_score{};
-	int m_dilators{};
+	struct {
+		Score score{};
+		int dilators{};
+		State state{};
+	} m_storage{};
 };
 } // namespace cronch

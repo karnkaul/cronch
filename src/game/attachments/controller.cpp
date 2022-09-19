@@ -1,6 +1,8 @@
-// #include <game/attachments/board.hpp>
+#include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
+#include <game/attachments/dispatch.hpp>
 #include <game/attachments/player.hpp>
+#include <game/world.hpp>
 #include <glm/gtx/norm.hpp>
 #include <util/logger.hpp>
 #include <vulkify/instance/keyboard.hpp>
@@ -22,9 +24,19 @@ void Controller::push(Lane const lane) {
 	if (m_queue.has_space()) { m_queue.push_back(lane); }
 }
 
+void Controller::reset() {
+	m_cooldown_remain = {};
+	m_queue.clear();
+	if (m_state != State::eIdle) {
+		m_scored_hit = true;
+		m_state = State::eRetreat;
+	}
+	flags &= ~eDisabled;
+}
+
 void Controller::tick(tg::DeltaTime dt) {
-	if (!refresh_player()) { return; }
-	if (listen_keys) { push_dirs(); }
+	if ((flags & eDisabled) || !refresh()) { return; }
+	if (flags & eListenKeys) { push_dirs(); }
 	switch (m_state) {
 	case State::eIdle: pop_dir(); break;
 	case State::eAdvance: advance(dt); break;
@@ -32,7 +44,10 @@ void Controller::tick(tg::DeltaTime dt) {
 	case State::eRetreat: retreat(dt); break;
 	case State::eCooldown: cool(dt); break;
 	}
-	if (vf::keyboard::pressed(vf::Key::eSpace)) { m_player->try_dilate_time(); }
+	if (vf::keyboard::pressed(vf::Key::eSpace) && !m_board->dilator_enabled()) {
+		m_board->dilate_time(m_player->dilation.scale, m_player->dilation.duration);
+		m_player->consume_dilator();
+	}
 	test_hit();
 }
 
@@ -45,7 +60,7 @@ void Controller::push_dirs() {
 }
 
 void Controller::advance(tg::DeltaTime dt) {
-	if (m_player->can_hit(m_dir.lane)) { m_state = State::eAttack; }
+	if (m_board->can_hit(m_dir.lane)) { m_state = State::eAttack; }
 	try_advance(dt);
 }
 
@@ -105,25 +120,32 @@ bool Controller::retreat_finished() const {
 void Controller::score(glm::vec2 const position, ChompType const type) {
 	m_scored_hit = true;
 	m_state = State::eRetreat;
-	m_player->score(position, type);
+	static_cast<World*>(scene())->dispatch->dispatch(Event::Score{position, type});
 }
+
+void Controller::damage(glm::vec2 const position) { static_cast<World*>(scene())->dispatch->dispatch(Event::Damage{position}); }
 
 void Controller::test_hit() {
 	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {
-		auto const result = m_player->attempt_hit(lane);
+		auto const result = m_board->attempt_hit(lane, m_player->prop->rect());
 		if (!result) { continue; }
 		if (m_dir.lane == result.lane && (m_state == State::eAttack || m_state == State::eAdvance)) {
 			score(result.position, result.type);
 		} else if (result.type == ChompType::eFood) {
-			m_player->take_damage(result.position);
+			damage(result.position);
 		}
 	}
 }
 
-bool Controller::refresh_player() {
+bool Controller::refresh() {
 	m_player = entity()->find<Player>();
 	if (!m_player) {
 		logger::warn("[Controller] Player not attached");
+		return false;
+	}
+	m_board = static_cast<World*>(scene())->board;
+	if (!m_board) {
+		logger::warn("[Controller] Board not attached");
 		return false;
 	}
 	return true;

@@ -1,46 +1,33 @@
 #include <engine/frame.hpp>
 #include <engine/resources.hpp>
-#include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
-#include <game/attachments/hud.hpp>
+#include <game/attachments/dispatch.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/renderer.hpp>
-#include <game/attachments/vfx.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
-#include <ktl/kformat.hpp>
 
 namespace cronch {
-bool Player::can_hit(Lane lane) const { return static_cast<World*>(scene())->board->can_hit(lane); }
+std::int64_t Player::score_food() { return m_storage.score.add(); }
 
-HitResult Player::attempt_hit(Lane lane) { return static_cast<World*>(scene())->board->attempt_hit(lane, prop->rect()); }
+void Player::score_dilator() { m_storage.dilators = std::clamp(m_storage.dilators + 1, 0, layout::max_dilators_v); }
 
-std::optional<vf::Rect> Player::raycast(Lane const lane) const { return static_cast<World*>(scene())->board->raycast(lane); }
-
-void Player::score(glm::vec2 position, ChompType const type) {
-	auto* world = static_cast<World*>(scene());
-	if (type == ChompType::eDilator) {
-		m_dilators = std::clamp(m_dilators + 1, 0, layout::max_dilators_v);
-	} else {
-		world->hud->popup(ktl::kformat("{}x", m_score.add()), prop->transform.position);
-	}
-	world->puff->spawn(position);
+void Player::take_damage() {
+	reset_multiplier();
+	controller->flags |= Controller::eDisabled;
+	m_storage.state = State::eDead;
 }
 
-bool Player::try_dilate_time() {
-	auto* board = static_cast<World*>(scene())->board;
-	if (board->dilator_enabled() || m_dilators == 0) { return false; }
-	--m_dilators;
-	board->dilate_time(dilation.scale, dilation.duration);
+bool Player::consume_dilator() {
+	if (m_storage.dilators == 0) { return false; }
+	--m_storage.dilators;
 	return true;
 }
 
-void Player::take_damage(glm::vec2 position) {
-	auto* world = static_cast<World*>(entity()->scene());
-	reset_multiplier();
-	world->puff->spawn(position, vf::red_v);
-	// TODO: game over
+void Player::reset() {
+	m_storage = {};
+	controller->reset();
 }
 
 void Player::setup() {

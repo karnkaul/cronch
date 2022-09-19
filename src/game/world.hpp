@@ -7,6 +7,8 @@ class Player;
 class Board;
 class Hud;
 class Vfx;
+class Coordinator;
+class Dispatch;
 
 class World : public tg::Scene {
   public:
@@ -14,6 +16,8 @@ class World : public tg::Scene {
 	Ptr<Board> board{};
 	Ptr<Hud> hud{};
 	Ptr<Vfx> puff{};
+	Ptr<Coordinator> coordinator{};
+	Ptr<Dispatch> dispatch{};
 
   private:
 	void setup() override;

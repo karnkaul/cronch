@@ -20,7 +20,11 @@ void Vfx::spawn(glm::vec2 position, vf::Rgba tint) {
 	entry.ttl = ttl;
 }
 
-void Vfx::setup() { layer = layer::vfx; }
+void Vfx::setup() {
+	tg::RenderAttachment::setup();
+
+	layer = layer::vfx;
+}
 
 void Vfx::tick(tg::DeltaTime dt) {
 	for (auto& entry : m_entries.active) {

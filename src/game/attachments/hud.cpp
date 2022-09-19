@@ -43,6 +43,8 @@ void Hud::popup(std::string text, glm::vec2 position, vf::Rgba const tint) {
 }
 
 void Hud::setup() {
+	tg::RenderAttachment::setup();
+
 	auto const* theme = tg::locate<Theme*>();
 	auto* resources = tg::locate<Resources*>();
 	auto* ttf = resources->load<vf::Ttf>(theme->hud.assets.font);

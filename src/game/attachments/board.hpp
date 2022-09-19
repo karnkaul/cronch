@@ -21,6 +21,7 @@ class Board : public tg::RenderAttachment {
 	std::optional<vf::Rect> raycast(Lane lane) const;
 	bool dilator_enabled() const { return m_dilator.remain > 0s; }
 	void dilate_time(float scale, tg::Time duration);
+	void reset();
 
   private:
 	struct Chomp {
