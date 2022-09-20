@@ -5,6 +5,7 @@
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/vfx.hpp>
+#include <game/attachments/wave.hpp>
 #include <game/theme.hpp>
 #include <game/world.hpp>
 #include <tardigrade/services.hpp>
@@ -28,6 +29,9 @@ void World::setup() {
 
 	entity = spawn();
 	coordinator = entity->attach<Coordinator>();
+
+	entity = spawn();
+	wave_gen = entity->attach<WaveGen>();
 
 	auto const* theme = tg::locate<Theme*>();
 	puff->sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->vfx.puff.sheet);

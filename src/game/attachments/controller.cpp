@@ -41,9 +41,9 @@ void Controller::reset() {
 }
 
 void Controller::tick(tg::DeltaTime dt) {
-	m_player->prop->transform.position = m_position;
-
 	if ((flags & eDisabled) || !refresh()) { return; }
+
+	m_player->prop->transform.position = m_position;
 	if (flags & eListenKeys) { push_dirs(); }
 
 	switch (m_state) {
@@ -142,7 +142,7 @@ void Controller::test_hit() {
 	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {
 		auto const result = m_board->attempt_hit(lane, m_player->prop->rect());
 		if (!result) { continue; }
-		if (m_dir.lane == result.lane && (m_state == State::eAttack || m_state == State::eAdvance)) {
+		if (m_state != State::eIdle && m_dir.lane == result.lane) {
 			score(result.position, result.type);
 		} else if (result.type == ChompType::eFood) {
 			damage(result.position);

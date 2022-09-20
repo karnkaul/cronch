@@ -7,7 +7,7 @@
 
 namespace cronch {
 namespace {
-glm::vec2 get_vec2(std::string value) {
+[[maybe_unused]] glm::vec2 get_vec2(std::string value) {
 	auto const x = value.find('x');
 	if (x == std::string::npos) { return {}; }
 	auto ret = glm::vec2{};

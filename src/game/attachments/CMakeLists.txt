@@ -15,4 +15,6 @@ target_sources(${PROJECT_NAME} PRIVATE
   renderer.hpp
   vfx.cpp
   vfx.hpp
+  wave.cpp
+  wave.hpp
 )

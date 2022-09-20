@@ -9,6 +9,7 @@ class Hud;
 class Vfx;
 class Coordinator;
 class Dispatch;
+class WaveGen;
 
 class World : public tg::Scene {
   public:
@@ -18,6 +19,7 @@ class World : public tg::Scene {
 	Ptr<Vfx> puff{};
 	Ptr<Coordinator> coordinator{};
 	Ptr<Dispatch> dispatch{};
+	Ptr<WaveGen> wave_gen{};
 
   private:
 	void setup() override;

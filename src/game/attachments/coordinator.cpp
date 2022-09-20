@@ -5,6 +5,7 @@
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/vfx.hpp>
+#include <game/attachments/wave.hpp>
 #include <game/world.hpp>
 #include <ktl/kformat.hpp>
 
@@ -46,11 +47,14 @@ void Coordinator::damage(Event::Damage const& damage) {
 	world->player->take_damage();
 	world->puff->spawn(damage.position, vf::red_v);
 	world->board->reset();
+	world->wave_gen->entity()->set_active(false);
 }
 
 void Coordinator::reset() {
 	auto* world = static_cast<World*>(scene());
 	world->player->reset();
 	world->board->reset();
+	world->wave_gen->entity()->set_active(true);
+	world->wave_gen->reset();
 }
 } // namespace cronch

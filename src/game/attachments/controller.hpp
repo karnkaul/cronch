@@ -24,7 +24,7 @@ class Controller : public tg::TickAttachment {
 
 	float speed{750.0f};
 	float max_disp{0.20f * static_cast<float>(layout::extent.x)};
-	tg::Time cooldown{0.20s};
+	tg::Time cooldown{0.15s};
 	std::uint32_t flags{eListenKeys};
 	float vibrate{2.0f};
 
