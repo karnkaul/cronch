@@ -59,6 +59,10 @@ struct ThemeParser {
 			out.player.data.uvs.attack = static_cast<std::uint32_t>(std::atoi(value.c_str()));
 			return;
 		}
+		if (terminal("heart")) {
+			out.player.data.uvs.heart = static_cast<std::uint32_t>(std::atoi(value.c_str()));
+			return;
+		}
 		error();
 	}
 

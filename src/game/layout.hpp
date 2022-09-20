@@ -8,6 +8,7 @@ inline constexpr glm::vec2 player_size{100.0f};
 inline constexpr glm::vec2 food_size{75.0f};
 inline constexpr glm::vec2 dilator_size{50.0f};
 inline constexpr int max_dilators_v{3};
+inline constexpr int max_health_v{3};
 } // namespace layout
 
 namespace layer {

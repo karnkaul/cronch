@@ -17,6 +17,11 @@ void Coordinator::setup() {
 	dispatch->attach(entity()->id(), Event::Type::eReset, [this](Event const&) { reset(); });
 }
 
+void Coordinator::tick(tg::DeltaTime) {
+	auto* world = static_cast<World*>(scene());
+	world->wave_gen->no_dilators = world->player->dilator_count() == layout::max_dilators_v;
+}
+
 void Coordinator::score(Event::Score const& score) {
 	auto* world = static_cast<World*>(scene());
 	switch (score.chomp_type) {
@@ -46,13 +51,17 @@ void Coordinator::damage(Event::Damage const& damage) {
 	auto* world = static_cast<World*>(scene());
 	world->player->take_damage();
 	world->puff->spawn(damage.position, vf::red_v);
-	world->board->reset();
-	world->wave_gen->entity()->set_active(false);
+	if (world->player->health() == 0) {
+		world->player->controller->flags |= Controller::eDisabled;
+		world->board->reset();
+		world->wave_gen->entity()->set_active(false);
+	}
 }
 
 void Coordinator::reset() {
 	auto* world = static_cast<World*>(scene());
 	world->player->reset();
+	world->player->controller->reset();
 	world->board->reset();
 	world->wave_gen->entity()->set_active(true);
 	world->wave_gen->reset();

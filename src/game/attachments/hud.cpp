@@ -50,7 +50,6 @@ void Hud::setup() {
 	auto const* theme = tg::locate<Theme*>();
 	auto* resources = tg::locate<Resources*>();
 	auto* ttf = resources->load<vf::Ttf>(theme->hud.assets.font);
-	auto const* sheet = resources->load<vf::Sprite::Sheet>(theme->chomps.assets.sheet);
 	m_popups.pool.get_factory().ttf = ttf;
 
 	auto const& device = *tg::locate<vf::GfxDevice const*>();
@@ -63,7 +62,21 @@ void Hud::setup() {
 	m_score.text.set_string("0");
 
 	auto pos = he - glm::vec2{50.0f};
-	auto const size = glm::vec2{static_cast<float>(theme->hud.data.score_height)};
+	auto const* sheet = resources->load<vf::Sprite::Sheet>(theme->player.assets.sheet);
+	auto size = glm::vec2{static_cast<float>(theme->hud.data.score_height)};
+	for (auto& heart : m_hearts.sprites) {
+		heart = vf::Sprite{device};
+		heart.draw_invalid = true;
+		heart.set_sheet(sheet, vf::Sprite::UvIndex{theme->player.data.uvs.heart});
+		heart.set_size(size);
+		heart.transform().position = pos;
+		pos.x -= 2.0f * size.x;
+	}
+
+	sheet = resources->load<vf::Sprite::Sheet>(theme->chomps.assets.sheet);
+	size *= 0.75f;
+	pos = he - glm::vec2{50.0f};
+	pos.y -= 50.0f;
 	for (auto& dilator : m_dilators.sprites) {
 		dilator = vf::Sprite{device};
 		dilator.draw_invalid = true;
@@ -96,6 +109,7 @@ void Hud::tick(tg::DeltaTime dt) {
 
 	update_score(world->player->score().value);
 	m_dilators.count = world->player->dilator_count();
+	m_hearts.count = world->player->health();
 }
 
 void Hud::render(tg::RenderTarget const& target) const {
@@ -103,6 +117,7 @@ void Hud::render(tg::RenderTarget const& target) const {
 	frame.draw(m_score.text);
 	for (auto const& popup : m_popups.active) { frame.draw(popup.text); }
 	for (int i = 0; i < m_dilators.count; ++i) { frame.draw(m_dilators.sprites[static_cast<std::size_t>(i)]); }
+	for (int i = 0; i < m_hearts.count; ++i) { frame.draw(m_hearts.sprites[static_cast<std::size_t>(i)]); }
 }
 
 void Hud::update_score(std::int64_t current) {

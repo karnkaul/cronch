@@ -1,10 +1,11 @@
 #pragma once
 #include <game/event.hpp>
-#include <tardigrade/attachment.hpp>
+#include <tardigrade/tick_attachment.hpp>
 
 namespace cronch {
-class Coordinator : public tg::Attachment {
+class Coordinator : public tg::TickAttachment {
 	void setup() override;
+	void tick(tg::DeltaTime) override;
 
 	void score(Event::Score const& score);
 	void damage(Event::Damage const& damage);

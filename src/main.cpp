@@ -8,6 +8,7 @@
 #include <game/attachments/hud.hpp>
 #include <game/attachments/player.hpp>
 #include <game/attachments/vfx.hpp>
+#include <game/attachments/wave.hpp>
 #include <game/event.hpp>
 #include <game/layout.hpp>
 #include <game/theme.hpp>
@@ -73,6 +74,7 @@ struct Debug : tg::TickAttachment {
 
 		if (released(vf::Key::eR)) { world->dispatch->dispatch(Event::Reset{}); }
 		if (released(vf::Key::eP)) { auto_play->enabled = !auto_play->enabled; }
+		if (released(vf::Key::eO)) { world->wave_gen->advance(); }
 	}
 };
 

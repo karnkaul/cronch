@@ -58,5 +58,9 @@ class Hud : public tg::RenderAttachment {
 		std::array<vf::Sprite, layout::max_dilators_v> sprites{};
 		int count{};
 	} m_dilators{};
+	struct {
+		std::array<vf::Sprite, layout::max_health_v> sprites{};
+		int count{};
+	} m_hearts{};
 };
 } // namespace cronch

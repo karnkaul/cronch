@@ -23,12 +23,13 @@ struct Wave {
 	tg::Time ttl{10s};
 	float chomp_speed{100.0f};
 	float dilator_chance{0.2f};
-	int dilator_gate{10};
+	int dilator_gate{5};
 	tg::Time cooldown{3s};
 	Range<tg::Time> spawn_rate{0.5s, 1s};
 	Range<vf::Degree> tumble{{-180.0f}, {180.0f}};
 
 	tg::Time elapsed{};
+	int number{};
 };
 
 class WaveGen : public tg::TickAttachment {
@@ -37,9 +38,11 @@ class WaveGen : public tg::TickAttachment {
 
 	enum class State : std::uint8_t { eActive, eCooldown };
 
+	void advance();
 	void reset();
 
 	ktl::fixed_vector<Lane, 4> lanes{all_lanes_v.begin(), all_lanes_v.end()};
+	bool no_dilators{};
 
   private:
 	void setup() override;
@@ -54,6 +57,5 @@ class WaveGen : public tg::TickAttachment {
 	State m_state{State::eActive};
 	tg::Time m_till_next{};
 	int m_dilator_gate{};
-	bool m_first_wave{true};
 };
 } // namespace cronch

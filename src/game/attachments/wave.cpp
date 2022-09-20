@@ -7,31 +7,38 @@
 
 namespace cronch {
 namespace {
-Wave advance(Wave const& in) {
+Wave advance_wave(Wave const& in) {
+	if (in.number == 0) {
+		auto ret = in;
+		ret.number = 1;
+		return ret;
+	}
 	return Wave{
-		.ttl = tg::Time{std::min(in.ttl.count() + 5.0f, 30.0f)},
-		.chomp_speed = std::min(in.chomp_speed + 25.0f, 500.0f),
+		.ttl = std::min(in.ttl + 5.0s, 30.0s),
+		.chomp_speed = std::min(in.chomp_speed + 25.0f, 300.0f),
 		.dilator_chance = std::max(in.dilator_chance - 0.03f, 0.05f),
-		.dilator_gate = std::min(in.dilator_gate + 5, 50),
+		.dilator_gate = std::min(in.dilator_gate + 2, 20),
 		.spawn_rate =
 			{
-				.lo = tg::Time{std::max(in.spawn_rate.lo.count() - 0.1f, 0.1f)},
-				.hi = tg::Time{std::max(in.spawn_rate.hi.count() - 0.2f, 0.2f)},
+				.lo = std::max(in.spawn_rate.lo - 0.1s, 0.2s),
+				.hi = std::max(in.spawn_rate.hi - 0.2s, 0.3s),
 			},
+		.number = in.number + 1,
 	};
 }
 } // namespace
 
 std::string to_string(Wave const& wave) {
-	return ktl::kformat("[Wave] ttl: {:.1f}s | speed: {:.1f} | dilator- chance: {:.2f}, gate: {} | spawn_rate: {:.2f}s-{:.2f}s", wave.ttl.count(),
-						wave.chomp_speed, wave.dilator_chance, wave.dilator_gate, wave.spawn_rate.lo.count(), wave.spawn_rate.hi.count());
+	return ktl::kformat("[Wave {}] ttl: {:.1f}s | speed: {:.1f} | dilator- chance: {:.2f}, gate: {} | spawn_rate: {:.2f}s-{:.2f}s", wave.number,
+						wave.ttl.count(), wave.chomp_speed, wave.dilator_chance, wave.dilator_gate, wave.spawn_rate.lo.count(), wave.spawn_rate.hi.count());
 }
+
+void WaveGen::advance() { m_active.elapsed = m_state == State::eActive ? m_active.ttl : m_active.cooldown; }
 
 void WaveGen::reset() {
 	m_active = {};
 	m_state = State::eCooldown;
 	m_dilator_gate = 0;
-	m_first_wave = true;
 }
 
 void WaveGen::setup() { reset(); }
@@ -46,12 +53,9 @@ void WaveGen::tick(tg::DeltaTime dt) {
 			logger::debug("[Wave] cooldown for [{:.1f}s]", m_active.cooldown.count());
 		} else {
 			m_state = State::eActive;
-			if (m_first_wave) {
-				m_first_wave = !m_first_wave;
-			} else {
-				m_active = advance(m_active);
-			}
+			m_active = advance_wave(m_active);
 			m_till_next = make_till_next();
+			m_board->chomp_speed = m_active.chomp_speed;
 			logger::debug("{}", m_active);
 		}
 	}
@@ -80,7 +84,7 @@ void WaveGen::spawn() {
 	auto const lane = temp[lane_index];
 	auto const tumble = vf::Degree{util::random_range(m_active.tumble.lo.value, m_active.tumble.hi.value)};
 	m_prev_lane = lane;
-	if (toss < m_active.dilator_chance && m_dilator_gate <= 0) {
+	if (!no_dilators && toss < m_active.dilator_chance && m_dilator_gate <= 0) {
 		world->board->spawn_dilator(lane, tumble);
 		m_dilator_gate = m_active.dilator_gate;
 	} else {
