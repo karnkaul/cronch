@@ -1,4 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
+  background.cpp
+  background.hpp
   board.cpp
   board.hpp
   coordinator.cpp

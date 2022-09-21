@@ -151,6 +151,19 @@ struct ThemeParser {
 		error();
 	}
 
+	void background_assets() {
+		if (terminal("tile")) {
+			out.background.assets.tile = std::move(value);
+			return;
+		}
+		error();
+	}
+
+	void background() {
+		if (match("assets.")) { return background_assets(); }
+		error();
+	}
+
 	std::size_t operator()(std::istream& in) {
 		auto parser = util::Property::Parser{in};
 		parser.parse_all([this](util::Property p) {
@@ -160,6 +173,7 @@ struct ThemeParser {
 			if (match("chomp.")) { return chomp(); }
 			if (match("hud.")) { return hud(); }
 			if (match("vfx.")) { return vfx(); }
+			if (match("background.")) { return background(); }
 			error();
 		});
 		return parsed;

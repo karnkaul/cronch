@@ -10,6 +10,7 @@ class Vfx;
 class Coordinator;
 class Dispatch;
 class WaveGen;
+class Background;
 
 class World : public tg::Scene {
   public:
@@ -20,6 +21,7 @@ class World : public tg::Scene {
 	Ptr<Coordinator> coordinator{};
 	Ptr<Dispatch> dispatch{};
 	Ptr<WaveGen> wave_gen{};
+	Ptr<Background> background{};
 
   private:
 	void setup() override;

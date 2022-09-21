@@ -1,4 +1,5 @@
 #include <engine/resources.hpp>
+#include <game/attachments/background.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/coordinator.hpp>
 #include <game/attachments/dispatch.hpp>
@@ -32,6 +33,9 @@ void World::setup() {
 
 	entity = spawn();
 	wave_gen = entity->attach<WaveGen>();
+
+	entity = spawn();
+	background = entity->attach<Background>();
 
 	auto const* theme = tg::locate<Theme*>();
 	puff->sheet = tg::locate<Resources*>()->load<vf::Sprite::Sheet>(theme->vfx.puff.sheet);

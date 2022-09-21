@@ -12,6 +12,7 @@ inline constexpr int max_health_v{3};
 } // namespace layout
 
 namespace layer {
+inline constexpr int background{-10};
 inline constexpr int game{0};
 inline constexpr int player{10};
 inline constexpr int vfx{20};

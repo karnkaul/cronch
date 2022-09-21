@@ -60,10 +60,19 @@ struct Theme {
 		Data puff{};
 	};
 
+	struct Background {
+		struct Assets {
+			std::string tile{};
+		};
+
+		Assets assets{};
+	};
+
 	Chomps chomps{};
 	Player player{};
 	Hud hud{};
 	Vfx vfx{};
+	Background background{};
 
 	std::size_t load(char const* uri);
 };

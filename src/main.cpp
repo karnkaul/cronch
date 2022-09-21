@@ -14,6 +14,7 @@
 #include <game/theme.hpp>
 #include <game/world.hpp>
 #include <glm/gtx/norm.hpp>
+#include <ktl/byte_array.hpp>
 #include <tardigrade/tardigrade.hpp>
 #include <util/logger.hpp>
 #include <util/random.hpp>
@@ -115,6 +116,15 @@ Theme load_theme(Resources& out) {
 	}
 	return ret;
 }
+
+void set_icon(vf::Context& out_context) {
+	auto buffer = ktl::byte_array{};
+	if (!io::load(buffer, "textures/icon.png")) { return; }
+	auto image = vf::Image{};
+	if (!image.load(vf::Image::Encoded{buffer})) { return; }
+	auto icon = vf::Icon{.bitmap = image};
+	out_context.set_icons({&icon, 1});
+}
 } // namespace
 } // namespace cronch
 
@@ -128,6 +138,7 @@ int main(int, char** argv) {
 	auto context = tg::ServiceProvider<Context>{std::move(*result)};
 	auto resources = tg::ServiceProvider<Resources>{context};
 	auto theme = tg::ServiceProvider<Theme>{load_theme(resources)};
+	set_icon(context.vf_context);
 
 	tg::Services::provide(&context.vf_context);
 	tg::Services::provide(&context.vf_context.device());
