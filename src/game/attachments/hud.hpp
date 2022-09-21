@@ -9,6 +9,8 @@
 namespace cronch {
 using namespace std::chrono_literals;
 
+class Frame;
+
 struct Toast {
 	using Tick = void (*)(vf::Text&, tg::DeltaTime, float);
 
@@ -19,16 +21,33 @@ struct Toast {
 	Tick tick{};
 };
 
+struct Letterbox {
+	enum class State { eDisabling, eDisabled, eEnabling, eEnabled };
+
+	vf::Mesh top{};
+	vf::Mesh bottom{};
+	float speed{500.0f};
+	float y_enabled{};
+	float y_disabled{};
+	bool enabled{};
+
+	State state() const;
+	void toggle();
+	void tick(tg::Time dt);
+};
+
 class Hud : public tg::RenderAttachment {
   public:
 	tg::Time popup_ttl{1s};
 	float popup_y_speed{100.0f};
 	vf::Text::Height popup_height{30};
 	float letterbox_speed{500.0f};
+	bool game_over{true};
+	bool show_restart{};
 
 	void spawn(Toast toast);
-	bool letterboxed() const { return m_letterbox.enabled; }
-	void toggle_letterbox() { m_letterbox.enabled = !m_letterbox.enabled; }
+	Letterbox::State letterbox_state() const { return m_letterbox.state(); }
+	void toggle_letterbox();
 
   private:
 	void setup() override;
@@ -38,7 +57,6 @@ class Hud : public tg::RenderAttachment {
 	void setup_letterbox(glm::vec2 area, float slit);
 
 	void update_score(std::int64_t current);
-	void update_letterbox(tg::Time dt);
 
 	struct Popup {
 		vf::Text text{};
@@ -68,12 +86,10 @@ class Hud : public tg::RenderAttachment {
 		std::array<vf::Sprite, layout::max_health_v> sprites{};
 		int count{};
 	} m_hearts{};
+	Letterbox m_letterbox{};
 	struct {
-		vf::Mesh top{};
-		vf::Mesh bottom{};
-		float y_enabled{};
-		float y_disabled{};
-		bool enabled{};
-	} m_letterbox{};
+		vf::Text title{};
+		vf::Text restart{};
+	} m_over{};
 };
 } // namespace cronch

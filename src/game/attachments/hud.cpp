@@ -44,6 +44,8 @@ void Hud::spawn(Toast toast) {
 	popup.tick = toast.tick;
 }
 
+void Hud::toggle_letterbox() { m_letterbox.enabled = !m_letterbox.enabled; }
+
 void Hud::setup() {
 	tg::RenderAttachment::setup();
 
@@ -89,6 +91,17 @@ void Hud::setup() {
 
 	setup_letterbox(extent, 0.3f * extent.y);
 
+	m_over.title = vf::Text{device};
+	if (ttf) { m_over.title.set_ttf(ttf); }
+	m_over.title.set_string("GAME OVER");
+	m_over.title.transform().position.y -= 0.25f * extent.y;
+
+	m_over.restart = vf::Text{device};
+	if (ttf) { m_over.restart.set_ttf(ttf); }
+	m_over.restart.set_string("[space] to restart");
+	m_over.restart.set_height(vf::Glyph::Height{30});
+	m_over.restart.transform().position.y = m_over.title.transform().position.y - 100.0f;
+
 	layer = layer::hud;
 }
 
@@ -114,7 +127,7 @@ void Hud::tick(tg::DeltaTime dt) {
 	m_dilators.count = world->player->dilator_count();
 	m_hearts.count = world->player->health();
 
-	update_letterbox(dt.real);
+	m_letterbox.tick(dt.real);
 }
 
 void Hud::render(tg::RenderTarget const& target) const {
@@ -125,6 +138,10 @@ void Hud::render(tg::RenderTarget const& target) const {
 	for (int i = 0; i < m_hearts.count; ++i) { frame.draw(m_hearts.sprites[static_cast<std::size_t>(i)]); }
 	frame.draw(m_letterbox.top);
 	frame.draw(m_letterbox.bottom);
+	if (game_over) {
+		frame.draw(m_over.title);
+		if (show_restart) { frame.draw(m_over.restart); }
+	}
 }
 
 void Hud::setup_letterbox(glm::vec2 const area, float slit) {
@@ -147,22 +164,23 @@ void Hud::update_score(std::int64_t current) {
 	}
 }
 
-void Hud::update_letterbox(tg::Time dt) {
-	if (m_letterbox.enabled) {
-		if (m_letterbox.top.instance().transform.position.y > m_letterbox.y_enabled) {
-			m_letterbox.top.instance().transform.position.y -= letterbox_speed * dt.count();
-		}
-		if (m_letterbox.top.instance().transform.position.y < m_letterbox.y_enabled) {
-			m_letterbox.top.instance().transform.position.y = m_letterbox.y_enabled;
-		}
+void Letterbox::tick(tg::Time dt) {
+	if (enabled) {
+		if (top.instance().transform.position.y > y_enabled) { top.instance().transform.position.y -= speed * dt.count(); }
+		if (top.instance().transform.position.y < y_enabled) { top.instance().transform.position.y = y_enabled; }
 	} else {
-		if (m_letterbox.top.instance().transform.position.y < m_letterbox.y_disabled) {
-			m_letterbox.top.instance().transform.position.y += letterbox_speed * dt.count();
-		}
-		if (m_letterbox.top.instance().transform.position.y > m_letterbox.y_disabled) {
-			m_letterbox.top.instance().transform.position.y = m_letterbox.y_disabled;
-		}
+		if (top.instance().transform.position.y < y_disabled) { top.instance().transform.position.y += speed * dt.count(); }
+		if (top.instance().transform.position.y > y_disabled) { top.instance().transform.position.y = y_disabled; }
 	}
-	m_letterbox.bottom.instance().transform.position.y = -m_letterbox.top.instance().transform.position.y;
+	bottom.instance().transform.position.y = -top.instance().transform.position.y;
+}
+
+auto Letterbox::state() const -> State {
+	if (enabled) {
+		if (top.instance().transform.position.y > y_enabled) { return State::eEnabling; }
+		return State::eEnabled;
+	}
+	if (top.instance().transform.position.y < y_disabled) { return State::eDisabling; }
+	return State::eDisabled;
 }
 } // namespace cronch

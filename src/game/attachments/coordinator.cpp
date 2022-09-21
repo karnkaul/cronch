@@ -8,6 +8,7 @@
 #include <game/attachments/wave.hpp>
 #include <game/world.hpp>
 #include <ktl/kformat.hpp>
+#include <vulkify/instance/keyboard.hpp>
 
 namespace cronch {
 void Coordinator::setup() {
@@ -17,9 +18,20 @@ void Coordinator::setup() {
 	dispatch->attach(entity()->id(), Event::Type::eReset, [this](Event const&) { reset(); });
 }
 
-void Coordinator::tick(tg::DeltaTime) {
+void Coordinator::tick(tg::DeltaTime dt) {
 	auto* world = static_cast<World*>(scene());
+	bool const dead = world->player->health() == 0;
 	world->wave_gen->no_dilators = world->player->dilator_count() == layout::max_dilators_v;
+	world->hud->game_over = dead;
+	if (dead) {
+		m_dead_elapsed += dt.real;
+		if (m_dead_elapsed >= restart_delay_v) {
+			world->hud->show_restart = true;
+			if (vf::keyboard::released(vf::Key::eSpace)) { reset(); }
+		}
+	} else {
+		world->hud->show_restart = false;
+	}
 }
 
 void Coordinator::score(Event::Score const& score) {
@@ -65,5 +77,6 @@ void Coordinator::reset() {
 	world->board->reset();
 	world->wave_gen->entity()->set_active(true);
 	world->wave_gen->reset();
+	m_dead_elapsed = {};
 }
 } // namespace cronch

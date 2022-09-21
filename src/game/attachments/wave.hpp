@@ -20,6 +20,9 @@ struct Range {
 struct Wave {
 	struct Advance;
 
+	static constexpr std::array<Lane, 4> all_lanes_v = {Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
+
+	ktl::fixed_vector<Lane, 4> lanes{Lane::eLeft, Lane::eRight};
 	tg::Time ttl{10s};
 	float chomp_speed{100.0f};
 	float dilator_chance{0.2f};
@@ -34,15 +37,13 @@ struct Wave {
 
 class WaveGen : public tg::TickAttachment {
   public:
-	static constexpr std::array<Lane, 4> all_lanes_v = {Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
-
 	enum class State : std::uint8_t { eActive, eCooldown };
 
 	void advance();
 	void reset();
 
-	ktl::fixed_vector<Lane, 4> lanes{all_lanes_v.begin(), all_lanes_v.end()};
 	bool no_dilators{};
+	bool progression{true};
 
   private:
 	void setup() override;
@@ -56,6 +57,7 @@ class WaveGen : public tg::TickAttachment {
 	Ptr<Board> m_board{};
 	State m_state{State::eActive};
 	tg::Time m_till_next{};
+	tg::Time m_prev_till_next{};
 	int m_dilator_gate{};
 };
 } // namespace cronch
