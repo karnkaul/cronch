@@ -76,6 +76,7 @@ struct Debug : tg::TickAttachment {
 		if (released(vf::Key::eR)) { world->dispatch->dispatch(Event::Reset{}); }
 		if (released(vf::Key::eP)) { auto_play->enabled = !auto_play->enabled; }
 		if (released(vf::Key::eO)) { world->wave_gen->advance(); }
+		if (released(vf::Key::eL)) { world->hud->toggle_letterbox(); }
 	}
 };
 

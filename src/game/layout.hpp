@@ -4,6 +4,7 @@
 namespace cronch {
 namespace layout {
 inline constexpr glm::uvec2 extent{720U, 720U};
+inline constexpr glm::vec2 centre{0.5f * glm::vec2{extent}};
 inline constexpr glm::vec2 player_size{100.0f};
 inline constexpr glm::vec2 food_size{75.0f};
 inline constexpr glm::vec2 dilator_size{50.0f};

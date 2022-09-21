@@ -55,7 +55,8 @@ void Hud::setup() {
 	auto const& device = *tg::locate<vf::GfxDevice const*>();
 	m_score.text = vf::Text{device};
 	m_score.text.set_height(vf::Text::Height{theme->hud.data.score_height});
-	auto const he = 0.5f * glm::vec2{layout::extent};
+	auto const extent = glm::vec2{layout::extent};
+	auto const he = 0.5f * extent;
 	m_score.text.transform().position = glm::vec2{-he.x + 50.0f, he.y - 50.0f};
 	m_score.text.set_align({.horz = vf::Text::Horz::eLeft, .vert = vf::Text::Vert::eMid});
 	if (ttf) { m_score.text.set_ttf(ttf); }
@@ -86,6 +87,8 @@ void Hud::setup() {
 		pos.x -= 2.0f * size.x;
 	}
 
+	setup_letterbox(extent, 0.3f * extent.y);
+
 	layer = layer::hud;
 }
 
@@ -110,6 +113,8 @@ void Hud::tick(tg::DeltaTime dt) {
 	update_score(world->player->score().value);
 	m_dilators.count = world->player->dilator_count();
 	m_hearts.count = world->player->health();
+
+	update_letterbox(dt.real);
 }
 
 void Hud::render(tg::RenderTarget const& target) const {
@@ -118,6 +123,21 @@ void Hud::render(tg::RenderTarget const& target) const {
 	for (auto const& popup : m_popups.active) { frame.draw(popup.text); }
 	for (int i = 0; i < m_dilators.count; ++i) { frame.draw(m_dilators.sprites[static_cast<std::size_t>(i)]); }
 	for (int i = 0; i < m_hearts.count; ++i) { frame.draw(m_hearts.sprites[static_cast<std::size_t>(i)]); }
+	frame.draw(m_letterbox.top);
+	frame.draw(m_letterbox.bottom);
+}
+
+void Hud::setup_letterbox(glm::vec2 const area, float slit) {
+	m_letterbox.top = vf::Mesh{*tg::locate<vf::GfxDevice const*>()};
+	m_letterbox.bottom = vf::Mesh{*tg::locate<vf::GfxDevice const*>()};
+	auto const size = glm::vec2{area.x, 0.5f * (area.y - slit)} + 3.0f;
+	m_letterbox.top.buffer.write(vf::Geometry::make_quad(vf::QuadCreateInfo{.size = size}));
+	m_letterbox.bottom.buffer.write(vf::Geometry::make_quad(vf::QuadCreateInfo{.size = size}));
+	m_letterbox.top.instance().tint = m_letterbox.bottom.instance().tint = vf::black_v;
+	m_letterbox.top.instance().transform.position.y = 0.5f * (slit + size.y);
+	m_letterbox.bottom.instance().transform.position.y = 0.5f * (-slit - size.y);
+	m_letterbox.y_enabled = m_letterbox.top.instance().transform.position.y;
+	m_letterbox.y_disabled = m_letterbox.y_enabled + size.y + 2.0f;
 }
 
 void Hud::update_score(std::int64_t current) {
@@ -125,5 +145,24 @@ void Hud::update_score(std::int64_t current) {
 		m_score.previous = current;
 		m_score.text.set_string(format_score(current));
 	}
+}
+
+void Hud::update_letterbox(tg::Time dt) {
+	if (m_letterbox.enabled) {
+		if (m_letterbox.top.instance().transform.position.y > m_letterbox.y_enabled) {
+			m_letterbox.top.instance().transform.position.y -= letterbox_speed * dt.count();
+		}
+		if (m_letterbox.top.instance().transform.position.y < m_letterbox.y_enabled) {
+			m_letterbox.top.instance().transform.position.y = m_letterbox.y_enabled;
+		}
+	} else {
+		if (m_letterbox.top.instance().transform.position.y < m_letterbox.y_disabled) {
+			m_letterbox.top.instance().transform.position.y += letterbox_speed * dt.count();
+		}
+		if (m_letterbox.top.instance().transform.position.y > m_letterbox.y_disabled) {
+			m_letterbox.top.instance().transform.position.y = m_letterbox.y_disabled;
+		}
+	}
+	m_letterbox.bottom.instance().transform.position.y = -m_letterbox.top.instance().transform.position.y;
 }
 } // namespace cronch
