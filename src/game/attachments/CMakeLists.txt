@@ -1,4 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
+  autoplay.cpp
+  autoplay.hpp
   background.cpp
   background.hpp
   board.cpp

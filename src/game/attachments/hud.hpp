@@ -26,10 +26,12 @@ struct Letterbox {
 
 	vf::Mesh top{};
 	vf::Mesh bottom{};
-	float speed{500.0f};
+	vf::Text title{};
+	vf::Text subtitle{};
+	float speed{750.0f};
 	float y_enabled{};
 	float y_disabled{};
-	bool enabled{};
+	bool enabled{true};
 
 	State state() const;
 	void toggle();
@@ -46,15 +48,13 @@ class Hud : public tg::RenderAttachment {
 	bool show_restart{};
 
 	void spawn(Toast toast);
-	Letterbox::State letterbox_state() const { return m_letterbox.state(); }
-	void toggle_letterbox();
+	Letterbox& letterbox() { return m_letterbox; }
+	Letterbox const& letterbox() const { return m_letterbox; }
 
   private:
 	void setup() override;
 	void tick(tg::DeltaTime dt) override;
 	void render(tg::RenderTarget const& target) const override;
-
-	void setup_letterbox(glm::vec2 area, float slit);
 
 	void update_score(std::int64_t current);
 

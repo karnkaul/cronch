@@ -26,6 +26,28 @@ std::string format_score(std::int64_t value) {
 }
 } // namespace
 
+auto Letterbox::state() const -> State {
+	if (enabled) {
+		if (top.instance().transform.position.y > y_enabled) { return State::eEnabling; }
+		return State::eEnabled;
+	}
+	if (top.instance().transform.position.y < y_disabled) { return State::eDisabling; }
+	return State::eDisabled;
+}
+
+void Letterbox::toggle() { enabled = !enabled; }
+
+void Letterbox::tick(tg::Time dt) {
+	if (enabled) {
+		if (top.instance().transform.position.y > y_enabled) { top.instance().transform.position.y -= speed * dt.count(); }
+		if (top.instance().transform.position.y < y_enabled) { top.instance().transform.position.y = y_enabled; }
+	} else {
+		if (top.instance().transform.position.y < y_disabled) { top.instance().transform.position.y += speed * dt.count(); }
+		if (top.instance().transform.position.y > y_disabled) { top.instance().transform.position.y = y_disabled; }
+	}
+	bottom.instance().transform.position.y = -top.instance().transform.position.y;
+}
+
 auto Hud::Factory::operator()() const -> Popup {
 	auto ret = Popup{};
 	ret.text = vf::Text{*tg::locate<vf::GfxDevice const*>()};
@@ -43,8 +65,6 @@ void Hud::spawn(Toast toast) {
 	popup.ttl = toast.ttl;
 	popup.tick = toast.tick;
 }
-
-void Hud::toggle_letterbox() { m_letterbox.enabled = !m_letterbox.enabled; }
 
 void Hud::setup() {
 	tg::RenderAttachment::setup();
@@ -89,7 +109,34 @@ void Hud::setup() {
 		pos.x -= 2.0f * size.x;
 	}
 
-	setup_letterbox(extent, 0.3f * extent.y);
+	// setup_letterbox(extent, 0.3f * extent.y);
+	{
+		m_letterbox.top = vf::Mesh{*tg::locate<vf::GfxDevice const*>()};
+		m_letterbox.bottom = vf::Mesh{*tg::locate<vf::GfxDevice const*>()};
+		auto const slit = extent.y * 0.33f;
+		// auto const size = glm::vec2{extent.x, 0.5f * extent.y - slit} + 3.0f;
+		auto const size = glm::vec2{extent.x, 0.5f * (extent.y - slit)} + 3.0f;
+		m_letterbox.top.buffer.write(vf::Geometry::make_quad(vf::QuadCreateInfo{.size = size}));
+		m_letterbox.bottom.buffer.write(vf::Geometry::make_quad(vf::QuadCreateInfo{.size = size}));
+		m_letterbox.top.instance().tint = m_letterbox.bottom.instance().tint = vf::black_v;
+		m_letterbox.top.instance().transform.position.y = 0.5f * (slit + size.y);
+		m_letterbox.bottom.instance().transform.position.y = 0.5f * (-slit - size.y);
+		m_letterbox.y_enabled = m_letterbox.top.instance().transform.position.y;
+		m_letterbox.y_disabled = m_letterbox.y_enabled + size.y + 2.0f;
+
+		m_letterbox.title = vf::Text{device};
+		m_letterbox.subtitle = vf::Text{device};
+		if (ttf) {
+			m_letterbox.title.set_ttf(ttf);
+			m_letterbox.subtitle.set_ttf(ttf);
+		}
+		m_letterbox.title.set_string("CRONCH");
+		m_letterbox.title.set_height(vf::Glyph::Height{50});
+		m_letterbox.title.transform().position.y = m_letterbox.top.instance().transform.position.y;
+		m_letterbox.subtitle.set_string("[space] to start");
+		m_letterbox.subtitle.set_height(vf::Glyph::Height{30});
+		m_letterbox.subtitle.transform().position.y = m_letterbox.bottom.instance().transform.position.y;
+	}
 
 	m_over.title = vf::Text{device};
 	if (ttf) { m_over.title.set_ttf(ttf); }
@@ -142,19 +189,10 @@ void Hud::render(tg::RenderTarget const& target) const {
 		frame.draw(m_over.title);
 		if (show_restart) { frame.draw(m_over.restart); }
 	}
-}
-
-void Hud::setup_letterbox(glm::vec2 const area, float slit) {
-	m_letterbox.top = vf::Mesh{*tg::locate<vf::GfxDevice const*>()};
-	m_letterbox.bottom = vf::Mesh{*tg::locate<vf::GfxDevice const*>()};
-	auto const size = glm::vec2{area.x, 0.5f * (area.y - slit)} + 3.0f;
-	m_letterbox.top.buffer.write(vf::Geometry::make_quad(vf::QuadCreateInfo{.size = size}));
-	m_letterbox.bottom.buffer.write(vf::Geometry::make_quad(vf::QuadCreateInfo{.size = size}));
-	m_letterbox.top.instance().tint = m_letterbox.bottom.instance().tint = vf::black_v;
-	m_letterbox.top.instance().transform.position.y = 0.5f * (slit + size.y);
-	m_letterbox.bottom.instance().transform.position.y = 0.5f * (-slit - size.y);
-	m_letterbox.y_enabled = m_letterbox.top.instance().transform.position.y;
-	m_letterbox.y_disabled = m_letterbox.y_enabled + size.y + 2.0f;
+	if (m_letterbox.state() == Letterbox::State::eEnabled) {
+		frame.draw(m_letterbox.title);
+		frame.draw(m_letterbox.subtitle);
+	}
 }
 
 void Hud::update_score(std::int64_t current) {
@@ -162,25 +200,5 @@ void Hud::update_score(std::int64_t current) {
 		m_score.previous = current;
 		m_score.text.set_string(format_score(current));
 	}
-}
-
-void Letterbox::tick(tg::Time dt) {
-	if (enabled) {
-		if (top.instance().transform.position.y > y_enabled) { top.instance().transform.position.y -= speed * dt.count(); }
-		if (top.instance().transform.position.y < y_enabled) { top.instance().transform.position.y = y_enabled; }
-	} else {
-		if (top.instance().transform.position.y < y_disabled) { top.instance().transform.position.y += speed * dt.count(); }
-		if (top.instance().transform.position.y > y_disabled) { top.instance().transform.position.y = y_disabled; }
-	}
-	bottom.instance().transform.position.y = -top.instance().transform.position.y;
-}
-
-auto Letterbox::state() const -> State {
-	if (enabled) {
-		if (top.instance().transform.position.y > y_enabled) { return State::eEnabling; }
-		return State::eEnabled;
-	}
-	if (top.instance().transform.position.y < y_disabled) { return State::eDisabling; }
-	return State::eDisabled;
 }
 } // namespace cronch

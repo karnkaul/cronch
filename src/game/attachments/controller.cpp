@@ -30,7 +30,7 @@ void Controller::push(Lane const lane) {
 }
 
 void Controller::reset() {
-	flags &= ~eDisabled;
+	flags = eListenKeys;
 	m_queue.clear();
 	m_position = {};
 	m_cooldown_remain = {};

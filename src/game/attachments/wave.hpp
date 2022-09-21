@@ -43,7 +43,7 @@ class WaveGen : public tg::TickAttachment {
 	void reset();
 
 	bool no_dilators{};
-	bool progression{true};
+	bool progression{};
 
   private:
 	void setup() override;

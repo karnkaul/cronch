@@ -51,6 +51,8 @@ void WaveGen::reset() {
 	m_active = {};
 	m_state = State::eCooldown;
 	m_dilator_gate = 0;
+	no_dilators = false;
+	progression = true;
 }
 
 void WaveGen::setup() { reset(); }

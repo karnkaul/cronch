@@ -2,6 +2,7 @@
 #include <engine/frame.hpp>
 #include <engine/io.hpp>
 #include <engine/resources.hpp>
+#include <game/attachments/autoplay.hpp>
 #include <game/attachments/board.hpp>
 #include <game/attachments/controller.hpp>
 #include <game/attachments/dispatch.hpp>
@@ -25,43 +26,15 @@ namespace cronch {
 namespace fs = std::filesystem;
 
 namespace {
-struct AutoPlay : tg::TickAttachment {
-	bool enabled{};
+struct Debug : tg::TickAttachment {
 
 	void setup() override {}
-
-	void tick(tg::DeltaTime) override {
-		if (!enabled) { return; }
-		auto* world = static_cast<World*>(scene());
-		if (world->player->controller->state() != Controller::State::eIdle) { return; }
-		struct {
-			vf::Rect rect{};
-			Lane lane{};
-			float sqr_dist{};
-			bool valid{};
-		} target{};
-		for (Lane l = Lane{}; l < Lane::eCOUNT_; l = increment(l)) {
-			auto const closest = world->board->raycast(l);
-			if (!closest) { continue; }
-			auto const sqr_dist = glm::length2(world->player->prop->transform.position - closest->offset);
-			if (!target.valid || sqr_dist < target.sqr_dist) { target = {*closest, l, sqr_dist, true}; }
-		}
-		if (!target.valid || !world->player->controller->can_chomp(target.rect)) { return; }
-
-		world->player->controller->push(target.lane);
-	}
-};
-
-struct Debug : tg::TickAttachment {
-	Ptr<AutoPlay> auto_play{};
-
-	void setup() override { auto_play = entity()->attach<AutoPlay>(); }
 
 	void tick(tg::DeltaTime) override {
 		auto* world = static_cast<World*>(scene());
 		using vf::keyboard::held;
 		using vf::keyboard::released;
-		if (released(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
+		// if (released(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
 		if (released(vf::Key::eT)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
 			auto const lane = lanes_v[util::random_range(0UL, std::size(lanes_v) - 1)];
@@ -74,9 +47,7 @@ struct Debug : tg::TickAttachment {
 		}
 
 		if (released(vf::Key::eR)) { world->dispatch->dispatch(Event::Reset{}); }
-		if (released(vf::Key::eP)) { auto_play->enabled = !auto_play->enabled; }
 		if (released(vf::Key::eO)) { world->wave_gen->advance(); }
-		if (released(vf::Key::eL)) { world->hud->toggle_letterbox(); }
 	}
 };
 
