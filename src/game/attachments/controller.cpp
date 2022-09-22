@@ -2,6 +2,7 @@
 #include <game/attachments/controller.hpp>
 #include <game/attachments/dispatch.hpp>
 #include <game/attachments/player.hpp>
+#include <game/event.hpp>
 #include <game/world.hpp>
 #include <glm/gtx/norm.hpp>
 #include <util/logger.hpp>
@@ -133,10 +134,10 @@ bool Controller::retreat_finished() const {
 void Controller::score(glm::vec2 const position, ChompType const type) {
 	m_scored_hit = true;
 	m_state = State::eRetreat;
-	static_cast<World*>(scene())->dispatch->dispatch(Event::Score{position, type});
+	static_cast<World*>(scene())->dispatch->dispatch(event::Score{position, type});
 }
 
-void Controller::damage(glm::vec2 const position) { static_cast<World*>(scene())->dispatch->dispatch(Event::Damage{position}); }
+void Controller::damage(glm::vec2 const position) { static_cast<World*>(scene())->dispatch->dispatch(event::Damage{position}); }
 
 void Controller::test_hit() {
 	for (Lane lane = Lane{}; lane < Lane::eCOUNT_; lane = increment(lane)) {

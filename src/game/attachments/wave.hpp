@@ -27,7 +27,7 @@ struct Wave {
 	float chomp_speed{100.0f};
 	float dilator_chance{0.2f};
 	int dilator_gate{5};
-	tg::Time cooldown{3s};
+	tg::Time cooldown{1s};
 	Range<tg::Time> spawn_rate{0.5s, 1s};
 	Range<vf::Degree> tumble{{-180.0f}, {180.0f}};
 

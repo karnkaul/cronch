@@ -30,6 +30,7 @@ Wave advance_wave(Wave const& in, bool progression) {
 		.chomp_speed = std::min(in.chomp_speed + 25.0f, 300.0f),
 		.dilator_chance = std::max(in.dilator_chance - 0.03f, 0.05f),
 		.dilator_gate = std::min(in.dilator_gate + 2, 20),
+		.cooldown = 3s,
 		.spawn_rate =
 			{
 				.lo = std::max(in.spawn_rate.lo - 0.1s, 0.2s),

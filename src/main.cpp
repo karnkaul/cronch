@@ -34,7 +34,6 @@ struct Debug : tg::TickAttachment {
 		auto* world = static_cast<World*>(scene());
 		using vf::keyboard::held;
 		using vf::keyboard::released;
-		// if (released(vf::Key::eEscape)) { tg::locate<vf::Context*>()->close(); }
 		if (released(vf::Key::eT)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
 			auto const lane = lanes_v[util::random_range(0UL, std::size(lanes_v) - 1)];
@@ -46,7 +45,7 @@ struct Debug : tg::TickAttachment {
 			}
 		}
 
-		if (released(vf::Key::eR)) { world->dispatch->dispatch(Event::Reset{}); }
+		if (released(vf::Key::eR)) { world->dispatch->dispatch(event::Reset{}); }
 		if (released(vf::Key::eO)) { world->wave_gen->advance(); }
 	}
 };
@@ -120,7 +119,7 @@ int main(int, char** argv) {
 	tg::Services::provide(&director);
 	auto& world = director.enqueue<World>();
 
-	world.spawn<Debug>();
+	if constexpr (debug_v) { world.spawn<Debug>(); }
 
 	context.vf_context.show();
 	while (!context.vf_context.closing()) {

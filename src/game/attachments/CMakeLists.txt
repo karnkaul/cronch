@@ -9,7 +9,6 @@ target_sources(${PROJECT_NAME} PRIVATE
   coordinator.hpp
   controller.cpp
   controller.hpp
-  dispatch.cpp
   dispatch.hpp
   hud.cpp
   hud.hpp

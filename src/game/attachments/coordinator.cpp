@@ -17,9 +17,9 @@ namespace cronch {
 void Coordinator::setup() {
 	m_auto_play = entity()->attach<AutoPlay>();
 	auto* dispatch = static_cast<World*>(scene())->dispatch;
-	dispatch->attach(entity()->id(), Event::Type::eScore, [this](Event const& e) { score(static_cast<Event::Score const&>(e)); });
-	dispatch->attach(entity()->id(), Event::Type::eDamage, [this](Event const& e) { damage(static_cast<Event::Damage const&>(e)); });
-	dispatch->attach(entity()->id(), Event::Type::eReset, [this](Event const&) { reset(); });
+	dispatch->attach<event::Score>(entity()->id(), [this](event::Score const& e) { score(e); });
+	dispatch->attach<event::Damage>(entity()->id(), [this](event::Damage const& e) { damage(e); });
+	dispatch->attach<event::Reset>(entity()->id(), [this](event::Reset const&) { reset(); });
 }
 
 void Coordinator::tick(tg::DeltaTime dt) {
@@ -49,7 +49,7 @@ void Coordinator::tick(tg::DeltaTime dt) {
 	}
 }
 
-void Coordinator::score(Event::Score const& score) {
+void Coordinator::score(event::Score const& score) {
 	auto* world = static_cast<World*>(scene());
 	if (world->player->controller->flags & Controller::Flag::eListenKeys) {
 		switch (score.chomp_type) {
@@ -76,7 +76,7 @@ void Coordinator::score(Event::Score const& score) {
 	world->puff->spawn(score.position);
 }
 
-void Coordinator::damage(Event::Damage const& damage) {
+void Coordinator::damage(event::Damage const& damage) {
 	auto* world = static_cast<World*>(scene());
 	world->player->take_damage();
 	world->puff->spawn(damage.position, vf::red_v);
