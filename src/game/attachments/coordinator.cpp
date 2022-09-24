@@ -20,6 +20,7 @@ void Coordinator::setup() {
 	dispatch->attach<event::Score>(entity()->id(), [this](event::Score const& e) { score(e); });
 	dispatch->attach<event::Damage>(entity()->id(), [this](event::Damage const& e) { damage(e); });
 	dispatch->attach<event::Reset>(entity()->id(), [this](event::Reset const&) { reset(); });
+	dispatch->attach<event::Demo>(entity()->id(), [this](event::Demo const&) { demo(); });
 }
 
 void Coordinator::tick(tg::DeltaTime dt) {

@@ -13,4 +13,6 @@ struct Damage {
 };
 
 struct Reset {};
+
+struct Demo {};
 } // namespace cronch::event

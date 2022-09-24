@@ -27,7 +27,6 @@ namespace fs = std::filesystem;
 
 namespace {
 struct Debug : tg::TickAttachment {
-
 	void setup() override {}
 
 	void tick(tg::DeltaTime) override {
@@ -118,8 +117,8 @@ int main(int, char** argv) {
 	auto director = tg::Director{};
 	tg::Services::provide(&director);
 	auto& world = director.enqueue<World>();
-
 	if constexpr (debug_v) { world.spawn<Debug>(); }
+	world.dispatch->dispatch(event::Demo{});
 
 	context.vf_context.show();
 	while (!context.vf_context.closing()) {
