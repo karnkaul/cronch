@@ -10,6 +10,10 @@ inline constexpr glm::vec2 food_size{75.0f};
 inline constexpr glm::vec2 dilator_size{50.0f};
 inline constexpr int max_dilators_v{3};
 inline constexpr int max_health_v{3};
+
+inline constexpr int title_height{80};
+inline constexpr int subtitle_height{35};
+inline constexpr char const* game_title_v{"cronch"};
 } // namespace layout
 
 namespace layer {

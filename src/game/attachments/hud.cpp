@@ -130,11 +130,11 @@ void Hud::setup() {
 			m_letterbox.title.set_ttf(ttf);
 			m_letterbox.subtitle.set_ttf(ttf);
 		}
-		m_letterbox.title.set_string("CRONCH");
-		m_letterbox.title.set_height(vf::Glyph::Height{50});
+		m_letterbox.title.set_string(layout::game_title_v);
+		m_letterbox.title.set_height(vf::Glyph::Height{layout::title_height});
 		m_letterbox.title.transform().position.y = m_letterbox.top.instance().transform.position.y;
 		m_letterbox.subtitle.set_string("[space] to start");
-		m_letterbox.subtitle.set_height(vf::Glyph::Height{30});
+		m_letterbox.subtitle.set_height(vf::Glyph::Height{layout::subtitle_height});
 		m_letterbox.subtitle.transform().position.y = m_letterbox.bottom.instance().transform.position.y;
 	}
 
