@@ -1,0 +1,22 @@
+## player
+player.assets.sheet = sheets/player.txt
+player.data.uv.idle = 0
+player.data.uv.attack = 1
+player.data.uv.heart = 2
+
+## chomp
+chomp.assets.sheet = sheets/chomps.txt
+chomp.data.uv.first = 0
+chomp.data.uv.last = 7
+chomp.data.uv.dilator = 7
+
+## hud
+hud.assets.font = fonts/radis_sans.otf
+hud.data.score_height = 40
+
+## vfx
+vfx.puff.sheet = sheets/puff.txt
+vfx.puff.duration = 0.25
+
+## background
+background.assets.tile = textures/wall_tile.png

@@ -1,0 +1,3 @@
+texture = textures/player.png
+x = 2
+y = 2

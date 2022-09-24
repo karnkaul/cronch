@@ -1,0 +1,7 @@
+images
+clock: https://iconarchive.com/show/flat-icons-by-flat-icons.com/Clock-icon.html
+food icons: https://freesvg.org/food-icons
+puff: https://www.artstation.com/artwork/q930JN
+
+sounds
+poof: https://freesound.org/people/Planman/sounds/208111/

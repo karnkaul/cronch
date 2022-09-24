@@ -1,0 +1,3 @@
+texture = textures/chomps.png
+x = 4
+y = 2
