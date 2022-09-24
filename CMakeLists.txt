@@ -18,7 +18,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE tardigrade::tardigrade capo::capo 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   ROOT_NS=cronch
-  $<$<CONFIG:Debug>:IRIS_DEBUG>
+  $<$<CONFIG:Debug>:CRONCH_DEBUG>
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL Clang OR CMAKE_CXX_COMPILER_ID STREQUAL GNU)

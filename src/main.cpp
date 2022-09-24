@@ -36,7 +36,7 @@ struct Debug : tg::TickAttachment {
 		using vf::keyboard::released;
 		if (released(vf::Key::eT)) {
 			static constexpr auto lanes_v = std::array{Lane::eLeft, Lane::eUp, Lane::eRight, Lane::eDown};
-			auto const lane = lanes_v[util::random_range(0UL, std::size(lanes_v) - 1)];
+			auto const lane = lanes_v[util::random_range(std::size_t{}, std::size(lanes_v) - 1)];
 			auto const tumble = vf::Degree{util::random_range(-180.0f, 180.0f)};
 			if (held(vf::Key::eLeftControl) || held(vf::Key::eRightControl)) {
 				world->board->spawn_dilator(lane, tumble);

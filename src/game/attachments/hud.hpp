@@ -5,6 +5,7 @@
 #include <util/pool.hpp>
 #include <vulkify/graphics/primitives/sprite.hpp>
 #include <vulkify/graphics/primitives/text.hpp>
+#include <array>
 
 namespace cronch {
 using namespace std::chrono_literals;

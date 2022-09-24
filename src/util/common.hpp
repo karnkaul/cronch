@@ -6,7 +6,7 @@ template <typename T>
 using Ptr = tg::Ptr<T>;
 
 constexpr bool debug_v =
-#if defined(IRIS_DEBUG)
+#if defined(CRONCH_DEBUG)
 	true;
 #else
 	false;

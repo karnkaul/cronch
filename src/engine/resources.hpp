@@ -14,13 +14,6 @@ class Ttf;
 namespace ROOT_NS {
 struct Context;
 
-struct SheetAnimation {
-	using Sequence = IndexTimeline::Sequence;
-
-	vf::Sprite::Sheet sheet{};
-	Sequence sequence{};
-};
-
 class Resources {
   public:
 	using Uri = ResourceMap::Uri;

@@ -92,21 +92,6 @@ struct Stopwatch {
 
 Resources::Resources(Context const& context) : m_context(&context) {}
 
-// template <>
-// SheetInfo Resources::do_load<SheetInfo>(LoadInfo<SheetInfo> const& info) const {
-// 	auto sw = Stopwatch{};
-// 	auto buffer = ktl::byte_array{};
-// 	if (!io::load(buffer, info.uri.c_str())) {
-// 		logger::warn("[Resources] Failed to read sheet animation: [{}]", info.uri);
-// 		return {};
-// 	}
-// 	auto str = std::stringstream{std::string{reinterpret_cast<char const*>(buffer.data()), buffer.size()}};
-// 	auto const ret = get_sheet_info(str);
-// 	if (!validate(ret, info.uri)) { return {}; }
-// 	logger::debug("[Resources] SheetInfo loaded: [{}] in {:.1f}ms", info.uri, sw.dt().count() * 1000.0f);
-// 	return ret;
-// }
-
 template <>
 Ptr<vf::Texture> Resources::do_load<vf::Texture>(Uri uri) {
 	if (uri.empty()) { return {}; }
@@ -196,30 +181,4 @@ Ptr<vf::Sprite::Sheet> Resources::do_load<vf::Sprite::Sheet>(Uri uri) {
 	auto ret = m_map.find_or_insert(std::move(uri), std::move(sheet));
 	return ret;
 }
-
-// template <>
-// SheetAnimation Resources::do_load<SheetAnimation>(LoadInfo<SheetAnimation> const& info) const {
-// 	auto sw = Stopwatch{};
-// 	auto buffer = ktl::byte_array{};
-// 	if (!io::load(buffer, info.uri.c_str())) {
-// 		logger::warn("[Resources] Failed to read sheet animation: [{}]", info.uri);
-// 		return {};
-// 	}
-// 	auto str = std::stringstream{std::string{reinterpret_cast<char const*>(buffer.data()), buffer.size()}};
-// 	auto ret = SheetAnimation{};
-// 	auto const sheet_info = get_sheet_info(str, &ret.sequence);
-// 	if (!validate(sheet_info, info.uri)) { return {}; }
-// 	if (!validate(ret.sequence, info.uri)) { return {}; }
-
-// 	auto image = vf::Image{};
-// 	if (!load_image(buffer, image, sheet_info.texture_uri.c_str())) { return {}; }
-// 	auto const tci = vf::TextureCreateInfo{.filtering = sheet_info.filtering};
-// 	ret.texture = vf::Texture{context.vf_context.device(), image, tci};
-// 	auto const tile_count = glm::uvec2{sheet_info.tile_count};
-// 	ret.sheet.set_uvs(&ret.texture, tile_count.y, tile_count.x);
-// 	if (ret.sequence.end <= ret.sequence.begin) { ret.sequence.end = ret.sheet.uv_count(); }
-
-// 	logger::debug("[Resources] SheetAnimation loaded: [{}] in {:.1f}ms", info.uri, sw.dt().count() * 1000.0f);
-// 	return ret;
-// }
 } // namespace ROOT_NS
